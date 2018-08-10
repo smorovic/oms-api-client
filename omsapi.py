@@ -1,3 +1,4 @@
+# pylint: disable=W0702,R0902
 """ CMS OMS Aggregation API python client
 """
 
@@ -17,67 +18,173 @@ class OMSQuery(object):
     def __init__(self, base_url, resource):
         self.base_url = base_url
         self.resource = resource
+        self.verbose = True
 
-        # Project, Filter, Sort, Paginate, Include
-        self._attrs = None
-        self._filter = []
-        self._sort = []
-        self._include = []
+        self._attrs = None  # Projection
+        self._filter = []   # Filtering
+        self._sort = []     # Sorting
+        self._include = []  # Include
+
+        # Pagination
         self.page = 1
         self.per_page = 10
+
+        # Metadata
+        self.metadata = None
+
+        self._load_meta()
+
+    def _attr_exists(self, attr):
+        """ Check if attribute exists
+
+            Returns:
+                bool: False if attribute does not exist
+                      True if exists or it is not available to check
+        """
+
+        if self.metadata and attr not in self.metadata:
+            self._warn("Attribute [{attr}] does not exist".format(attr=attr))
+            return False
+
+        return True
+
+    def _load_meta(self):
+        """ Load meta information about resource without fetching data"""
+
+        url = "{base_url}/{resource}/meta".format(base_url=self.base_url,
+                                                  resource=self.resource)
+
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            self._warn("Failed to fetch meta information")
+        else:
+            try:
+                self.metadata = response.json()["meta"]["fields"]
+            except:
+                self._warn("Meta information is incorrect")
+
+    def _warn(self, message, raise_exc=False):
+        """ Print Warning message or raise Exception
+
+            Args:
+                message (str): warning message to be printed or raised as exception
+                raise_exc (bool):  raise Exception or just print warning
+        """
+
+        if raise_exc:
+            raise OMSQueryException(message)
+
+        if self.verbose:
+            print("Warning: {message}".format(message=message))
+
+    def set_verbose(self, verbose):
+        """ Set verbose flag
+
+            Args:
+                verbose (bool): True/False
+
+            Examples:
+                .set_verbose(True)
+        """
+        self.verbose = verbose
 
     def attrs(self, attributes=None):
         """ Projection. Query only those attributes which you need.
 
-            attributes - list of attribute names (fields)
+            Args:
+                attributes (list): list of attribute names.
+
+            Examples:
+                .attrs(["fill_number", "run_number"])
         """
 
         if not isinstance(attributes, list):
-            raise OMSQueryException("attributes must be a list")
+            self._warn("attrs() - attributes must be a list", raise_exc=True)
 
-        self._attrs = attributes
+        # Find only existing attributes, remove duplicates
+        self._attrs = [attr for attr in set(attributes) if self._attr_exists(attr)]
 
         return self
 
     def filter(self, attribute, value, operator="EQ"):
         """ Filtering of a result set
 
-            attribute - name of a attribute (field)
-            value - filtering against value
-            operator - one of supported operators (OMS_FILTER_OPERATORS)
+            Args:
+                attribute (str): name of a attribute (field)
+                value (str/int/bool): filtering against value
+                operator (str): one of supported operators (OMS_FILTER_OPERATORS)
+
+            Examples:
+                .filter("fill_number", 5000, "GT")
         """
 
         if not isinstance(operator, str):
-            raise OMSQueryException("operator name must be a string")
+            self._warn("filter() - operator name must be a string", raise_exc=True)
 
         operator = operator.upper()
 
         if operator not in OMS_FILTER_OPERATORS:
-            raise OMSQueryException("{op} is not supported operator".format(op=operator))
+            self._warn("filter() - [{op}] is not supported operator".format(op=operator), raise_exc=True)
 
-        self._filter.append("filter[{k}][{op}]={v}".format(k=attribute, op=operator, v=value))
 
+
+        if self._attr_exists(attribute):
+            # Check metadata if attribute is searchable
+            searchable = True
+            try:
+                searchable = metadata["searchable"]
+            except:
+                # Metadata is not available or not complete
+                pass
+
+            if searchable:
+                self._filter.append("filter[{k}][{op}]={v}".format(k=attribute,
+                                                                   op=operator,
+                                                                   v=value))
         return self
 
     def sort(self, attribute, asc=True):
         """ Sort result set
 
-            attribute - name of attribute (field)
-            asc - ascending direction or not
+            Args:
+                attribute (str): name of attribute (field)
+                asc (bool): ascending direction or not
+
+            Examples:
+                .sort("fill_number", asc=False)
         """
 
         if not isinstance(attribute, str):
-            raise OMSQueryException("attribute name must be a string")
+            self._warn("sort() - attribute name must be a string", raise_exc=True)
 
-        if not asc:
-            attribute = "-"+attribute
+        if self._attr_exists(attribute):
+            # Check metadata if attribute is sortable
+            sortable = True
+            try:
+                sortable = metadata["fields"]["sortable"]
+            except:
+                # Metadata is not available or not complete
+                pass
 
-        self._sort.append(attribute)
+            if sortable:
+                if not asc:
+                    attribute = "-"+attribute
+
+                self._sort.append(attribute)
 
         return self
 
     def paginate(self, page=1, per_page=10):
-        """ Paginate result set """
+        """ Paginate result set
+
+            Args:
+                page (int): page number
+                per_page (int): page size(limit)
+
+            Examples:
+                .paginate(2, 25)
+        """
 
         self.page = page
         self.per_page = per_page
@@ -85,17 +192,28 @@ class OMSQuery(object):
         return self
 
     def include(self, key):
-        """ Include special flags to a query """
+        """ Include special flags to a query
+
+            Args:
+                key (str): one of supported keys
+
+            Examples:
+                .include("meta")
+        """
 
         if key not in OMS_INCLUDES:
-            raise OMSQueryException("{key} is not supported include".format(key=key))
+            self._warn("{key} is not supported include".format(key=key), raise_exc=True)
 
         self._include.append(key)
 
         return self
 
-    def data(self, verbose=False):
-        """ Execute query and retrieve data """
+    def data(self):
+        """ Execute query and retrieve data
+
+            Returns:
+                requests.Response object
+        """
 
         url = "{base_url}/{resource}/".format(base_url=self.base_url,
                                               resource=self.resource)
@@ -104,18 +222,18 @@ class OMSQuery(object):
 
         # Project
         if self._attrs:
-            url_params.append("fields=" + ",".join(self._attrs))
+            url_params.append("fields=" + ",".join(set(self._attrs)))
 
         # Filter
         url_params.extend(self._filter)
 
         # Sort
         if self._sort:
-            url_params.append("sort=" + ",".join(self._sort))
+            url_params.append("sort=" + ",".join(set(self._sort)))
 
         # Include
         if self._include:
-            url_params.append("include=" + ",".join(self._include))
+            url_params.append("include=" + ",".join(set(self._include)))
 
         # Paginate
         page_offset = self.per_page * (self.page - 1)
@@ -125,14 +243,20 @@ class OMSQuery(object):
         if url_params:
             url = url + "?" + "&".join(url_params)
 
-        if verbose:
+        if self.verbose:
             print(url)
 
         return requests.get(url)
 
     def meta(self):
-        """ TODO Get meta information about resource without fetching data """
-        pass
+        """ Returns metadata of a resource.
+
+            Returns:
+                str: if metadata is available
+                None: if metadata is unavailable
+        """
+        return self.metadata
+
 
 class OMSAPI(object):
     """ Base OMS API client """
