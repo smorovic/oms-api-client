@@ -144,6 +144,15 @@ class OMSQuery(object):
                                                                    v=value))
         return self
 
+    def clear_filter(self):
+        """ Remove all filters
+        """
+        
+        self._filter = []
+        
+        return self
+
+
     def sort(self, attribute, asc=True):
         """ Sort result set
 
