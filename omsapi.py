@@ -8,6 +8,7 @@ import requests
 OMS_FILTER_OPERATORS = ["EQ", "NEQ", "LT", "GT", "LE", "GE", "LIKE"]
 OMS_INCLUDES = ["meta", "presentation_timestamp"]
 
+
 class OMSQueryException(Exception):
     """ OMS API Client Exception """
     pass
@@ -18,7 +19,7 @@ class OMSQuery(object):
     def __init__(self, base_url, resource):
         self.base_url = base_url
         self.resource = resource
-        self.verbose = True
+        self.verbose = False
 
         self._attrs = None  # Projection
         self._filter = []   # Filtering
@@ -61,7 +62,7 @@ class OMSQuery(object):
         else:
             try:
                 self.metadata = response.json()["meta"]["fields"]
-            except:
+            except (ValueError, KeyError, TypeError):
                 self._warn("Meta information is incorrect")
 
     def _warn(self, message, raise_exc=False):
@@ -133,8 +134,8 @@ class OMSQuery(object):
             # Check metadata if attribute is searchable
             searchable = True
             try:
-                searchable = metadata["searchable"]
-            except:
+                searchable = self.metadata["searchable"]
+            except (KeyError, TypeError):
                 # Metadata is not available or not complete
                 pass
 
@@ -151,7 +152,6 @@ class OMSQuery(object):
         self._filter = []
         
         return self
-
 
     def sort(self, attribute, asc=True):
         """ Sort result set
@@ -171,8 +171,8 @@ class OMSQuery(object):
             # Check metadata if attribute is sortable
             sortable = True
             try:
-                sortable = metadata["fields"]["sortable"]
-            except:
+                sortable = self.metadata["fields"]["sortable"]
+            except (KeyError, TypeError):
                 # Metadata is not available or not complete
                 pass
 
