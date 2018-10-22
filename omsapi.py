@@ -13,6 +13,7 @@ class OMSQueryException(Exception):
     """ OMS API Client Exception """
     pass
 
+
 class OMSQuery(object):
     """ OMS Query object """
 
@@ -22,8 +23,8 @@ class OMSQuery(object):
         self.verbose = False
 
         self._attrs = None  # Projection
-        self._filter = []   # Filtering
-        self._sort = []     # Sorting
+        self._filter = []  # Filtering
+        self._sort = []  # Sorting
         self._include = []  # Include
 
         # Pagination
@@ -128,8 +129,6 @@ class OMSQuery(object):
         if operator not in OMS_FILTER_OPERATORS:
             self._warn("filter() - [{op}] is not supported operator".format(op=operator), raise_exc=True)
 
-
-
         if self._attr_exists(attribute):
             # Check metadata if attribute is searchable
             searchable = True
@@ -148,9 +147,9 @@ class OMSQuery(object):
     def clear_filter(self):
         """ Remove all filters
         """
-        
+
         self._filter = []
-        
+
         return self
 
     def sort(self, attribute, asc=True):
@@ -178,7 +177,7 @@ class OMSQuery(object):
 
             if sortable:
                 if not asc:
-                    attribute = "-"+attribute
+                    attribute = "-" + attribute
 
                 self._sort.append(attribute)
 
