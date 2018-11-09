@@ -1,8 +1,17 @@
 # CMS OMS API python client
 
-## Install packages
+## Install
 ```
-pip install -r requirements.txt
+git clone ssh://git@gitlab.cern.ch:7999/cmsoms/oms-api-client.git
+cd oms-api-client
+python setup.py install
+```
+
+## Update
+```
+cd oms-api-client
+git pull
+python setup.py install -- force
 ```
 
 # Usage
@@ -80,7 +89,7 @@ q.include("meta")
 ```
 
 ### Query is ready. Execute it!
-.data() - execute query and fetch data. 
+.data() - execute query and fetch data.
 
 Returns requests.Response object
 
