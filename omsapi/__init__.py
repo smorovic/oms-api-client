@@ -6,13 +6,11 @@ from __future__ import print_function
 import requests
 
 OMS_FILTER_OPERATORS = ["EQ", "NEQ", "LT", "GT", "LE", "GE", "LIKE"]
-OMS_INCLUDES = ["meta", "presentation_timestamp"]
-
+OMS_INCLUDES = ["meta", "presentation_timestamp", "data_only"]
 
 class OMSQueryException(Exception):
     """ OMS API Client Exception """
     pass
-
 
 class OMSQuery(object):
     """ OMS Query object """
@@ -20,11 +18,11 @@ class OMSQuery(object):
     def __init__(self, base_url, resource):
         self.base_url = base_url
         self.resource = resource
-        self.verbose = False
+        self.verbose = True
 
         self._attrs = None  # Projection
-        self._filter = []  # Filtering
-        self._sort = []  # Sorting
+        self._filter = []   # Filtering
+        self._sort = []     # Sorting
         self._include = []  # Include
 
         # Pagination
@@ -63,7 +61,7 @@ class OMSQuery(object):
         else:
             try:
                 self.metadata = response.json()["meta"]["fields"]
-            except (ValueError, KeyError, TypeError):
+            except:
                 self._warn("Meta information is incorrect")
 
     def _warn(self, message, raise_exc=False):
@@ -129,12 +127,14 @@ class OMSQuery(object):
         if operator not in OMS_FILTER_OPERATORS:
             self._warn("filter() - [{op}] is not supported operator".format(op=operator), raise_exc=True)
 
+
+
         if self._attr_exists(attribute):
             # Check metadata if attribute is searchable
             searchable = True
             try:
-                searchable = self.metadata["searchable"]
-            except (KeyError, TypeError):
+                searchable = metadata["searchable"]
+            except:
                 # Metadata is not available or not complete
                 pass
 
@@ -147,10 +147,11 @@ class OMSQuery(object):
     def clear_filter(self):
         """ Remove all filters
         """
-
+        
         self._filter = []
-
+        
         return self
+
 
     def sort(self, attribute, asc=True):
         """ Sort result set
@@ -170,14 +171,14 @@ class OMSQuery(object):
             # Check metadata if attribute is sortable
             sortable = True
             try:
-                sortable = self.metadata["fields"]["sortable"]
-            except (KeyError, TypeError):
+                sortable = metadata["fields"]["sortable"]
+            except:
                 # Metadata is not available or not complete
                 pass
 
             if sortable:
                 if not asc:
-                    attribute = "-" + attribute
+                    attribute = "-"+attribute
 
                 self._sort.append(attribute)
 
