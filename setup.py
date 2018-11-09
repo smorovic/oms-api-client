@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
 
-     name='omsapi',  
+     name='omsapi',
 
      version='0.1',
 
@@ -14,7 +14,7 @@ setuptools.setup(
 
      author_email="cmsoms-developers@cern.ch",
 
-     description="library for OMS API",
+     description="python client for OMS API",
 
      long_description=long_description,
 
@@ -28,7 +28,7 @@ setuptools.setup(
 
      classifiers=[
 
-         "Programming Language :: Python :: 2",
+         "Programming Language :: Python :: 3",
 
          "License :: OSI Approved :: CERN License",
 
