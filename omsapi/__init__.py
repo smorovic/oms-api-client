@@ -15,10 +15,10 @@ class OMSQueryException(Exception):
 class OMSQuery(object):
     """ OMS Query object """
 
-    def __init__(self, base_url, resource):
+    def __init__(self, base_url, resource, verbose):
         self.base_url = base_url
         self.resource = resource
-        self.verbose = True
+        self.verbose = verbose
 
         self._attrs = None  # Projection
         self._filter = []   # Filtering
@@ -270,9 +270,10 @@ class OMSQuery(object):
 class OMSAPI(object):
     """ Base OMS API client """
 
-    def __init__(self, api_url="", api_version="v1"):
+    def __init__(self, api_url="", api_version="v1", verbose = True):
         self.api_url = api_url
         self.api_version = api_version
+        self.verbose = verbose
 
         self.base_url = "{api_url}/{api_version}".format(api_url=api_url,
                                                          api_version=api_version)
@@ -282,7 +283,7 @@ class OMSAPI(object):
     def query(self, resource):
         """ Create query object """
 
-        q = OMSQuery(self.base_url, resource=resource)
+        q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose)
 
         return q
 
