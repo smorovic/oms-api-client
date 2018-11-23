@@ -2,16 +2,18 @@
 
 ## Install
 ```
+sudo yum install cern-get-sso-cookie
+
 git clone ssh://git@gitlab.cern.ch:7999/cmsoms/oms-api-client.git
 cd oms-api-client
-python setup.py install
+python setup.py install --user
 ```
 
 ## Update
 ```
 cd oms-api-client
 git pull
-python setup.py install -- force
+python setup.py install --force
 ```
 
 # Usage

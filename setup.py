@@ -6,34 +6,34 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
 
-     name='omsapi',
+    name='omsapi',
 
-     version='0.3',
+    version='0.4',
 
-     author="Mantas Stankevicius",
+    author="Mantas Stankevicius",
 
-     author_email="cmsoms-developers@cern.ch",
+    author_email="cmsoms-developers@cern.ch",
 
-     description="python client for OMS API",
+    description="python client for OMS API",
 
-     long_description=long_description,
+    long_description=long_description,
 
-     long_description_content_type="text/markdown",
+    long_description_content_type="text/markdown",
 
-     url="https://gitlab.cern.ch/cmsoms/oms-api-client",
+    url="https://gitlab.cern.ch/cmsoms/oms-api-client",
 
-     packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(),
 
-     install_requires=['requests'],
+    install_requires=['requests'],
 
-     classifiers=[
+    classifiers=[
 
-         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3",
 
-         "License :: OSI Approved :: CERN License",
+        "License :: OSI Approved :: CERN License",
 
-         "Operating System :: OS Independent",
+        "Operating System :: OS Independent",
 
-     ],
+    ],
 
- )
+)
