@@ -3,26 +3,35 @@
 """
 
 from __future__ import print_function
+import os
 import requests
+import subprocess
+
+# Suppress InsecureRequestWarning
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 OMS_FILTER_OPERATORS = ["EQ", "NEQ", "LT", "GT", "LE", "GE", "LIKE"]
 OMS_INCLUDES = ["meta", "presentation_timestamp", "data_only"]
 
-class OMSQueryException(Exception):
+
+class OMSApiException(Exception):
     """ OMS API Client Exception """
     pass
+
 
 class OMSQuery(object):
     """ OMS Query object """
 
-    def __init__(self, base_url, resource, verbose):
+    def __init__(self, base_url, resource, verbose, cookies):
         self.base_url = base_url
         self.resource = resource
         self.verbose = verbose
+        self.cookies = cookies
 
         self._attrs = None  # Projection
-        self._filter = []   # Filtering
-        self._sort = []     # Sorting
+        self._filter = []  # Filtering
+        self._sort = []  # Sorting
         self._include = []  # Include
 
         # Pagination
@@ -54,14 +63,14 @@ class OMSQuery(object):
         url = "{base_url}/{resource}/meta".format(base_url=self.base_url,
                                                   resource=self.resource)
 
-        response = requests.get(url)
+        response = requests.get(url, verify=False, cookies=self.cookies)
 
         if response.status_code != 200:
             self._warn("Failed to fetch meta information")
         else:
             try:
                 self.metadata = response.json()["meta"]["fields"]
-            except:
+            except (ValueError, KeyError, TypeError):
                 self._warn("Meta information is incorrect")
 
     def _warn(self, message, raise_exc=False):
@@ -73,7 +82,7 @@ class OMSQuery(object):
         """
 
         if raise_exc:
-            raise OMSQueryException(message)
+            raise OMSApiException(message)
 
         if self.verbose:
             print("Warning: {message}".format(message=message))
@@ -103,7 +112,8 @@ class OMSQuery(object):
             self._warn("attrs() - attributes must be a list", raise_exc=True)
 
         # Find only existing attributes, remove duplicates
-        self._attrs = [attr for attr in set(attributes) if self._attr_exists(attr)]
+        self._attrs = [attr for attr in set(
+            attributes) if self._attr_exists(attr)]
 
         return self
 
@@ -120,21 +130,21 @@ class OMSQuery(object):
         """
 
         if not isinstance(operator, str):
-            self._warn("filter() - operator name must be a string", raise_exc=True)
+            self._warn("filter() - operator name must be a string",
+                       raise_exc=True)
 
         operator = operator.upper()
 
         if operator not in OMS_FILTER_OPERATORS:
-            self._warn("filter() - [{op}] is not supported operator".format(op=operator), raise_exc=True)
-
-
+            self._warn("filter() - [{op}] is not supported operator".format(op=operator),
+                       raise_exc=True)
 
         if self._attr_exists(attribute):
             # Check metadata if attribute is searchable
             searchable = True
             try:
-                searchable = metadata["searchable"]
-            except:
+                searchable = self.metadata["searchable"]
+            except (KeyError, TypeError):
                 # Metadata is not available or not complete
                 pass
 
@@ -147,11 +157,10 @@ class OMSQuery(object):
     def clear_filter(self):
         """ Remove all filters
         """
-        
-        self._filter = []
-        
-        return self
 
+        self._filter = []
+
+        return self
 
     def sort(self, attribute, asc=True):
         """ Sort result set
@@ -165,20 +174,21 @@ class OMSQuery(object):
         """
 
         if not isinstance(attribute, str):
-            self._warn("sort() - attribute name must be a string", raise_exc=True)
+            self._warn("sort() - attribute name must be a string",
+                       raise_exc=True)
 
         if self._attr_exists(attribute):
             # Check metadata if attribute is sortable
             sortable = True
             try:
-                sortable = metadata["fields"]["sortable"]
-            except:
+                sortable = self.metadata["fields"]["sortable"]
+            except (KeyError, TypeError):
                 # Metadata is not available or not complete
                 pass
 
             if sortable:
                 if not asc:
-                    attribute = "-"+attribute
+                    attribute = "-" + attribute
 
                 self._sort.append(attribute)
 
@@ -211,7 +221,8 @@ class OMSQuery(object):
         """
 
         if key not in OMS_INCLUDES:
-            self._warn("{key} is not supported include".format(key=key), raise_exc=True)
+            self._warn("{key} is not supported include".format(
+                key=key), raise_exc=True)
 
         self._include.append(key)
 
@@ -247,15 +258,16 @@ class OMSQuery(object):
         # Paginate
         page_offset = self.per_page * (self.page - 1)
         url_params.append("page[offset]={offset}".format(offset=page_offset))
-        url_params.append("page[limit]={per_page}".format(per_page=self.per_page))
+        url_params.append(
+            "page[limit]={per_page}".format(per_page=self.per_page))
 
         if url_params:
             url = url + "?" + "&".join(url_params)
 
         if self.verbose:
             print(url)
-
-        return requests.get(url)
+        
+        return requests.get(url, verify=False, cookies=self.cookies)
 
     def meta(self):
         """ Returns metadata of a resource.
@@ -270,7 +282,7 @@ class OMSQuery(object):
 class OMSAPI(object):
     """ Base OMS API client """
 
-    def __init__(self, api_url="", api_version="v1", verbose = True):
+    def __init__(self, api_url="", api_version="v1", verbose=True):
         self.api_url = api_url
         self.api_version = api_version
         self.verbose = verbose
@@ -278,15 +290,47 @@ class OMSAPI(object):
         self.base_url = "{api_url}/{api_version}".format(api_url=api_url,
                                                          api_version=api_version)
 
-        self._auth = None
+        self.cookies = {}
 
     def query(self, resource):
         """ Create query object """
 
-        q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose)
+        q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose, cookies=self.cookies)
 
         return q
 
-    def auth(self):
+    def auth_krb(self, cookie_path="ssocookies.txt"):
         """ TODO Authorisation details for https """
-        pass
+        
+        def rm_file(filename):
+            if os.path.isfile(filename) and os.access(filename, os.R_OK):
+                os.remove(filename)
+        
+        rm_file(cookie_path)
+        
+        try:
+            subprocess.call(["cern-get-sso-cookie", "--krb", "--nocertverify", "-u", self.api_url, "-o", cookie_path])
+        except OSError as e:
+            if e.errno == os.errno.ENOENT:
+                raise OMSApiException("Required package is not available. yum install cern-get-sso-cookie")
+            else:
+                raise OMSApiException("Failed to authenticate with kerberos")
+
+        self.cookies = {}
+
+        with open(cookie_path, "r") as f:
+            cookies_raw = f.read()
+
+            for line in cookies_raw.split("\n"):
+                fields = line.split()
+                if len(fields) == 7:
+                    # fields = domain tailmatch path secure expires name value
+                    key = fields[5]
+
+                    if any(p in key for p in ["_saml_idp", "_shibsession_"]):
+                        self.cookies[key] = fields[6]
+        
+        if not self.cookies.keys():
+            raise OMSApiException("Unkown cookies")
+            
+        rm_file(cookie_path)
