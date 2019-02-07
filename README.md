@@ -59,6 +59,12 @@ or
 q.filter("fill_number", 5000, "GT").filter("fill_number", 5500, "LT")
 ```
 
+.filters(*filters*) - apply multiple filters at once. Same as calling .filter() multiple times
+
+Examples:
+
+see `examples/09-multiple-filters.py`
+
 ### Sorting
 .sort(*attribute_name*, *asc=True*) - set attribute name and direction.
 
