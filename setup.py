@@ -8,7 +8,7 @@ setuptools.setup(
 
     name='omsapi',
 
-    version='0.4',
+    version='0.4.1',
 
     author="Mantas Stankevicius",
 

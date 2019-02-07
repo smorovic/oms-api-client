@@ -117,8 +117,19 @@ class OMSQuery(object):
 
         return self
 
+    def filters(self, filters):
+        """ Filtering of a result set. Apply list of filters. 
+            Same as calling .filter(attribute_name, value, operator) multiple times
+
+            Args:
+                filters (list): list of filters (dicts) [{"attribute_name": X, "value": Y, "operator": Z}, ...]
+        """
+
+        for f in filters:
+            self.filter(f["attribute_name"], f["value"], f["operator"])
+
     def filter(self, attribute, value, operator="EQ"):
-        """ Filtering of a result set
+        """ Filtering of a result set. Apply single filter
 
             Args:
                 attribute (str): name of a attribute (field)
@@ -266,7 +277,7 @@ class OMSQuery(object):
 
         if self.verbose:
             print(url)
-        
+
         return requests.get(url, verify=False, cookies=self.cookies)
 
     def meta(self):
@@ -295,24 +306,27 @@ class OMSAPI(object):
     def query(self, resource):
         """ Create query object """
 
-        q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose, cookies=self.cookies)
+        q = OMSQuery(self.base_url, resource=resource,
+                     verbose=self.verbose, cookies=self.cookies)
 
         return q
 
     def auth_krb(self, cookie_path="ssocookies.txt"):
-        """ TODO Authorisation details for https """
-        
+        """ Authorisation for https using kerberos"""
+
         def rm_file(filename):
             if os.path.isfile(filename) and os.access(filename, os.R_OK):
                 os.remove(filename)
-        
+
         rm_file(cookie_path)
-        
+
         try:
-            subprocess.call(["cern-get-sso-cookie", "--krb", "--nocertverify", "-u", self.api_url, "-o", cookie_path])
+            subprocess.call(["cern-get-sso-cookie", "--krb",
+                             "--nocertverify", "-u", self.api_url, "-o", cookie_path])
         except OSError as e:
             if e.errno == os.errno.ENOENT:
-                raise OMSApiException("Required package is not available. yum install cern-get-sso-cookie")
+                raise OMSApiException(
+                    "Required package is not available. yum install cern-get-sso-cookie")
             else:
                 raise OMSApiException("Failed to authenticate with kerberos")
 
@@ -329,8 +343,8 @@ class OMSAPI(object):
 
                     if any(p in key for p in ["_saml_idp", "_shibsession_"]):
                         self.cookies[key] = fields[6]
-        
+
         if not self.cookies.keys():
             raise OMSApiException("Unkown cookies")
-            
+
         rm_file(cookie_path)
