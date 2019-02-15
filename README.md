@@ -16,6 +16,13 @@ git pull
 python setup.py install --force
 ```
 
+# FAQ
+
+### How to install cern-get-sso-cookie on Ubuntu?
+Download latest script version: https://linuxsoft.cern.ch/cern/centos/7/cern/x86_64/repoview/cern-get-sso-cookie.html
+
+Follow these steps to install rpm on Ubuntu: https://www.rosehosting.com/blog/how-to-install-rpm-packages-on-ubuntu/
+
 # Usage
 
 ### Create API client
