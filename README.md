@@ -103,6 +103,14 @@ Example:
 q.include("meta")
 ```
 
+### Custom Query parameters
+.custom(*parameter_name*, *parameter_value*) - set custom parameter key:value pair
+
+Example:
+```
+q.custom("group[size]", 100)
+```
+
 ### Query is ready. Execute it!
 .data() - execute query and fetch data.
 

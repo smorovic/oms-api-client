@@ -33,6 +33,7 @@ class OMSQuery(object):
         self._filter = []  # Filtering
         self._sort = []  # Sorting
         self._include = []  # Include
+        self._custom = [] # Custom parameters: array of key:value
 
         # Pagination
         self.page = 1
@@ -239,6 +240,21 @@ class OMSQuery(object):
 
         return self
 
+    def custom(self, key, value=None):
+        """ Add custom parameter (key-value pair) in a query 
+
+            Args:
+                key(str): custom parameter name
+                value(str/int/bool): custom parameter value
+            
+            Examples:
+                .custom("group[size]", 100)
+        """
+
+        self._custom.append("{k}={v}".format(k=key, v=value))
+
+        return self
+
     def data(self):
         """ Execute query and retrieve data
 
@@ -271,6 +287,9 @@ class OMSQuery(object):
         url_params.append("page[offset]={offset}".format(offset=page_offset))
         url_params.append(
             "page[limit]={per_page}".format(per_page=self.per_page))
+
+        # Custom parameters
+        url_params.extend(self._custom)
 
         if url_params:
             url = url + "?" + "&".join(url_params)
