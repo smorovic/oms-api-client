@@ -6,6 +6,8 @@ from __future__ import print_function
 import os
 import requests
 import subprocess
+from omsapi.cern_sso_service import cert_sign_on
+from omsapi.cern_sso import get_user_cert, get_cookies
 
 # Suppress InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -33,7 +35,7 @@ class OMSQuery(object):
         self._filter = []  # Filtering
         self._sort = []  # Sorting
         self._include = []  # Include
-        self._custom = [] # Custom parameters: array of key:value
+        self._custom = []  # Custom parameters: array of key:value
 
         # Pagination
         self.page = 1
@@ -246,7 +248,7 @@ class OMSQuery(object):
             Args:
                 key(str): custom parameter name
                 value(str/int/bool): custom parameter value
-            
+
             Examples:
                 .custom("group[size]", 100)
         """
@@ -312,7 +314,7 @@ class OMSQuery(object):
 class OMSAPI(object):
     """ Base OMS API client """
 
-    def __init__(self, api_url="", api_version="v1", verbose=True):
+    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True):
         self.api_url = api_url
         self.api_version = api_version
         self.verbose = verbose
@@ -329,6 +331,22 @@ class OMSAPI(object):
                      verbose=self.verbose, cookies=self.cookies)
 
         return q
+
+    def auth_cert(self, usercert=None, userkey=None):
+        """ CERN SSO authorisation using certificate
+        """
+
+        # Check if user provided custom certificate path
+        if not usercert or not userkey:
+            # Use default location
+            usercert, userkey = get_user_cert()
+
+        try:
+            self.cookies = get_cookies("https://cmsoms.cern.ch", usercert, userkey)
+
+        except:
+            print("Failed to authorize using certificate")
+            exit()
 
     def auth_krb(self, cookie_path="ssocookies.txt"):
         """ Authorisation for https using kerberos"""

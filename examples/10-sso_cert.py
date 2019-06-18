@@ -6,6 +6,7 @@ from __future__ import print_function
 from omsapi import OMSAPI
 
 omsapi = OMSAPI()
+
 omsapi.auth_cert()
 
 # Create a query.

@@ -1,38 +1,111 @@
 # CMS OMS API python client
 
-## Install
-```
-sudo yum install cern-get-sso-cookie
+This client is a recommended way to access CMS OMS data from your scripts.
 
+## Install
+
+```
 git clone ssh://git@gitlab.cern.ch:7999/cmsoms/oms-api-client.git
 cd oms-api-client
-python setup.py install --user
+python3 -m pip install -r requirements.txt
+python3 setup.py install --user
 ```
 
 ## Update
 ```
 cd oms-api-client
 git pull
-python setup.py install --force
+python3 setup.py install --user
 ```
 
-# FAQ
+## Requirements
 
-### How to install cern-get-sso-cookie on Ubuntu?
-Download latest script version: https://linuxsoft.cern.ch/cern/centos/7/cern/x86_64/repoview/cern-get-sso-cookie.html
+Download certificate (*.p12) from https://ca.cern.ch/ca/ (New Grid User Certificate)
 
-Follow these steps to install rpm on Ubuntu: https://www.rosehosting.com/blog/how-to-install-rpm-packages-on-ubuntu/
+**Certificate must be passwordless**
 
-# Usage
+```
+mkdir -p ~/private
+
+# Leave Import Password blank
+# PEM passphrase is required to be set
+openssl pkcs12 -clcerts -nokeys -in myCertificate.p12 -out ~/private/usercert.pem
+openssl pkcs12 -nocerts -in myCertificate.p12 -out ~/private/userkey.tmp.pem
+openssl rsa -in ~/private/userkey.tmp.pem -out ~/private/userkey.pem
+```
+
+# Examples
+
+### Fetch all eras
+```
+from omsapi import OMSAPI
+
+omsapi = OMSAPI()
+omsapi.auth_cert()
+
+# Create a query.
+q = omsapi.query("eras")
+
+# Execute query & fetch data
+response = q.data()
+
+# Display JSON data
+print(response.json())
+```
+
+### Fetch Last Run
+```
+from omsapi import OMSAPI
+
+omsapi = OMSAPI()
+omsapi.auth_cert()
+
+# Create a query
+q = omsapi.query("runs")
+
+# Chain filters
+q.paginate(page=1, per_page=1).sort("run_number", asc=False)
+
+# Execute query & fetch data
+response = q.data()
+
+# Display JSON data
+print(response.json())
+```
+
+[More examples](examples/)
+
+# Client API
 
 ### Create API client
-constructor OMSAPI(*url*, *version="v1"*) - set API endpoint and version
+constructor OMSAPI(*url*, *version="v1"*) - set API endpoint and version (recommended to keep default values)
 
 Example:
 ```
-omsapi = OMSAPI("http://cmsomsapi.cern.ch:8080/api", "v1")
+from omsapi import OMSAPI
+
+omsapi = OMSAPI()
 ```
-Note that "http://cmsomsapi.cern.ch:8080/api" is **NOT official** endpoint and must not be used in production.
+
+### Authenticate using certificate
+omsapi.auth_cert(*usercert*, *userkey*) - set user certificate path (recommended to keep default values)
+
+* usercert - full path to certificate file
+* userkey - full path to certificate key file
+
+Example:
+```
+omsapi.auth_cert()
+```
+
+Set these values ONLY if:
+* your user certificate is NOT in `~/private` or `~/.globus` folders
+* certificate names ane NOT `usercert.pem` and `userkey.pem`
+
+Example:
+```
+omsapi.auth_cert("/home/myuser/.cert/crt.pem", "/home/myuser/.cert/key.pem") 
+```
 
 ### Create query
 omsapi.query(*resource_name*) - set resource name (runs/fills/lumisections/...)
@@ -45,7 +118,7 @@ q = omsapi.query("eras")
 ```
 
 ### Projection
-.attrs(*[attribute_names]*) - set only those attribute names you need in response.
+.attrs(*[attribute_names]*) - set only those attribute names you need in response
 
 Example:
 ```
@@ -73,7 +146,7 @@ Examples:
 see `examples/09-multiple-filters.py`
 
 ### Sorting
-.sort(*attribute_name*, *asc=True*) - set attribute name and direction.
+.sort(*attribute_name*, *asc=True*) - set attribute name and direction
 
 Example:
 ```
@@ -96,7 +169,7 @@ Supported flags: ["meta", "presentation_timestamp"]
 
 meta - includes meta information about resource into response object
 
-presentation_timestamp - changes representation of datetime attribtutes.
+presentation_timestamp - changes representation of datetime attribtutes
 
 Example:
 ```
@@ -116,39 +189,21 @@ q.custom("group[size]", 100)
 
 Returns requests.Response object
 
-Example
+Example:
 ```
 resp = q.data()
 
 print(resp.json())
 ```
 
+## Alternative Auth option
 
-# Examples
+Instead of auth with certificate you can use Kerberos authentication.
 
-### Fetch all eras
+This works **ONLY** with CERN managed CC7 machines.
+
 ```
-# Create a query.
-q = omsapi.query("eras")
-
-# Execute query & fetch data
-response = q.data()
-
-# Display JSON data
-print(response.json())
+sudo yum install cern-get-sso-cookie
 ```
 
-### Fetch Last Run
-```
-# Create a query
-q = omsapi.query("runs")
-
-# Chain filters
-q.paginate(page=1, per_page=1).sort("run_number", asc=False)
-
-# Execute query & fetch data
-response = q.data()
-
-# Display JSON data
-print(response.json())
-```
+see example [07-sso-krb.py](examples/07-sso-krb.py)
