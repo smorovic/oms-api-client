@@ -8,7 +8,7 @@ setuptools.setup(
 
     name='omsapi',
 
-    version='0.5.0',
+    version='0.5.1',
 
     author="Mantas Stankevicius",
 
@@ -23,6 +23,8 @@ setuptools.setup(
     url="https://gitlab.cern.ch/cmsoms/oms-api-client",
 
     packages=setuptools.find_packages(),
+
+    include_package_data=True,
 
     install_requires=['requests'],
 
