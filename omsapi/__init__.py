@@ -6,7 +6,6 @@ from __future__ import print_function
 import os
 import requests
 import subprocess
-from omsapi.cern_sso_service import cert_sign_on
 from omsapi.cern_sso import get_user_cert, get_cookies
 
 # Suppress InsecureRequestWarning
