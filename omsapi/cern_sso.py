@@ -49,8 +49,6 @@ def get_cookies(url, usercert, userkey, verify=True):
         query = urlparse(redirect.url).query
         auth_url = "{}?{}".format(base, query)
 
-        print(auth_url)
-
         # Auth response
         auth_resp = session.get(auth_url, verify=verify)
         auth_resp.raise_for_status()
