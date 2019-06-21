@@ -77,6 +77,8 @@ print(response.json())
 
 # Client API
 
+## OMSAPI Class
+
 ### Create API client
 constructor OMSAPI(*url*, *version="v1"*) - set API endpoint and version (recommended to keep default values)
 
@@ -116,6 +118,8 @@ Example:
 ```
 q = omsapi.query("eras")
 ```
+
+## OMSAPIQuery class
 
 ### Projection
 .attrs(*[attribute_names]*) - set only those attribute names you need in response
@@ -182,6 +186,22 @@ q.include("meta")
 Example:
 ```
 q.custom("group[size]", 100)
+```
+
+### Set verbose
+.set_verbose(True/False) - print debug information or not
+
+Example:
+```
+q.set_verbose(False)
+```
+
+### Set query attribute validation
+.set_validation(True/False) - check or not for typos in filters/projection/sorting
+
+Example:
+```
+.set_validation(False)
 ```
 
 ### Query is ready. Execute it!
