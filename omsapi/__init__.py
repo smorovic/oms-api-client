@@ -15,7 +15,6 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 OMS_FILTER_OPERATORS = ["EQ", "NEQ", "LT", "GT", "LE", "GE", "LIKE"]
 OMS_INCLUDES = ["meta", "presentation_timestamp", "data_only"]
 
-
 class OMSApiException(Exception):
     """ OMS API Client Exception """
     pass
@@ -25,6 +24,7 @@ class OMSQuery(object):
     """ OMS Query object """
 
     def __init__(self, base_url, resource, verbose, cookies):
+        self.attribute_validation = True
         self.base_url = base_url
         self.resource = resource
         self.verbose = verbose
@@ -54,8 +54,12 @@ class OMSQuery(object):
         """
 
         if self.metadata and attr not in self.metadata:
-            self._warn("Attribute [{attr}] does not exist".format(attr=attr))
-            return False
+            self._warn("Attribute [{attr}] does not exist. " +
+                       "Check for a typo or disable validation " + 
+                       "by .set_validation(False) ".format(attr=attr))
+
+            # Return True if attribute validation is disabled
+            return False == self.attribute_validation
 
         return True
 
@@ -99,6 +103,20 @@ class OMSQuery(object):
                 .set_verbose(True)
         """
         self.verbose = verbose
+
+    def set_validation(self, attribute_validation):
+        """ Enable or disable attribute validation for 
+            filtering/sorting/projection
+
+            Args:
+
+                attribute_validation (bool): True/False
+
+            Examples:
+                .set_validation(False)    
+        """
+
+        self.attribute_validation = attribute_validation
 
     def attrs(self, attributes=None):
         """ Projection. Query only those attributes which you need.
@@ -151,7 +169,7 @@ class OMSQuery(object):
         if operator not in OMS_FILTER_OPERATORS:
             self._warn("filter() - [{op}] is not supported operator".format(op=operator),
                        raise_exc=True)
-
+        
         if self._attr_exists(attribute):
             # Check metadata if attribute is searchable
             searchable = True
@@ -234,8 +252,8 @@ class OMSQuery(object):
         """
 
         if key not in OMS_INCLUDES:
-            self._warn("{key} is not supported include".format(
-                key=key), raise_exc=True)
+            self._warn("{key} is not supported include".format(key=key),
+                       raise_exc=True)
 
         self._include.append(key)
 
@@ -323,7 +341,7 @@ class OMSAPI(object):
 
         self.cookies = {}
 
-    def query(self, resource):
+    def query(self, resource, query_validation=True):
         """ Create query object """
 
         q = OMSQuery(self.base_url, resource=resource,
@@ -341,7 +359,8 @@ class OMSAPI(object):
             usercert, userkey = get_user_cert()
 
         try:
-            self.cookies = get_cookies("https://cmsoms.cern.ch", usercert, userkey)
+            self.cookies = get_cookies(
+                "https://cmsoms.cern.ch", usercert, userkey)
 
         except:
             print("Failed to authorize using certificate")
