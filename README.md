@@ -216,6 +216,18 @@ resp = q.data()
 print(resp.json())
 ```
 
+### Interested how query (URL) looks like?
+.data_query() - Contruct URL to be used to query data from API
+
+Returns String
+
+Example:
+```
+url = q.data_query()
+
+print(url)
+```
+
 ## Alternative Auth option
 
 Instead of auth with certificate you can use Kerberos authentication.

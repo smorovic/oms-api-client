@@ -274,11 +274,11 @@ class OMSQuery(object):
 
         return self
 
-    def data(self):
-        """ Execute query and retrieve data
+    def data_query(self):
+        """ Contruct URL to be used to query data from API
 
             Returns:
-                requests.Response object
+                str
         """
 
         url = "{base_url}/{resource}/".format(base_url=self.base_url,
@@ -312,6 +312,18 @@ class OMSQuery(object):
 
         if url_params:
             url = url + "?" + "&".join(url_params)
+
+        return url
+    
+
+    def data(self):
+        """ Execute query and retrieve data
+
+            Returns:
+                requests.Response object
+        """
+
+        url = self.data_query()
 
         if self.verbose:
             print(url)
