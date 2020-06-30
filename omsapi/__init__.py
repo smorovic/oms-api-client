@@ -372,7 +372,7 @@ class OMSAPI(object):
 
         try:
             self.cookies = get_cookies(
-                "https://cmsoms.cern.ch", usercert, userkey)
+                "https://cmsoms.cern.ch", usercert, userkey, False)
 
         except:
             print("Failed to authorize using certificate")
