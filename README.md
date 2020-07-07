@@ -18,6 +18,12 @@ git pull
 python3 setup.py install --user
 ```
 
+## Build RPM
+```
+cd oms-api-client
+python3 setup.py bdist_rpm
+```
+
 ## Requirements
 
 Download certificate (*.p12) from https://ca.cern.ch/ca/ (New Grid User Certificate)
