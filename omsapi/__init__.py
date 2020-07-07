@@ -55,7 +55,7 @@ class OMSQuery(object):
 
         if self.metadata and attr not in self.metadata:
             self._warn("Attribute [{attr}] does not exist. " +
-                       "Check for a typo or disable validation " + 
+                       "Check for a typo or disable validation " +
                        "by .set_validation(False) ".format(attr=attr))
 
             # Return True if attribute validation is disabled
@@ -66,8 +66,9 @@ class OMSQuery(object):
     def _load_meta(self):
         """ Load meta information about resource without fetching data"""
 
+        resourceBase = self.resource.split("/")[0]
         url = "{base_url}/{resource}/meta".format(base_url=self.base_url,
-                                                  resource=self.resource)
+                                                  resource=resourceBase)
 
         response = requests.get(url, verify=False, cookies=self.cookies)
 
@@ -105,7 +106,7 @@ class OMSQuery(object):
         self.verbose = verbose
 
     def set_validation(self, attribute_validation):
-        """ Enable or disable attribute validation for 
+        """ Enable or disable attribute validation for
             filtering/sorting/projection
 
             Args:
@@ -113,7 +114,7 @@ class OMSQuery(object):
                 attribute_validation (bool): True/False
 
             Examples:
-                .set_validation(False)    
+                .set_validation(False)
         """
 
         self.attribute_validation = attribute_validation
@@ -138,7 +139,7 @@ class OMSQuery(object):
         return self
 
     def filters(self, filters):
-        """ Filtering of a result set. Apply list of filters. 
+        """ Filtering of a result set. Apply list of filters.
             Same as calling .filter(attribute_name, value, operator) multiple times
 
             Args:
@@ -169,7 +170,7 @@ class OMSQuery(object):
         if operator not in OMS_FILTER_OPERATORS:
             self._warn("filter() - [{op}] is not supported operator".format(op=operator),
                        raise_exc=True)
-        
+
         if self._attr_exists(attribute):
             # Check metadata if attribute is searchable
             searchable = True
@@ -260,7 +261,7 @@ class OMSQuery(object):
         return self
 
     def custom(self, key, value=None):
-        """ Add custom parameter (key-value pair) in a query 
+        """ Add custom parameter (key-value pair) in a query
 
             Args:
                 key(str): custom parameter name
@@ -314,7 +315,7 @@ class OMSQuery(object):
             url = url + "?" + "&".join(url_params)
 
         return url
-    
+
 
     def data(self):
         """ Execute query and retrieve data
