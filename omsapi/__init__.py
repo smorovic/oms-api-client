@@ -6,7 +6,6 @@ from __future__ import print_function
 import os
 import requests
 import subprocess
-from omsapi.cern_sso import get_user_cert, get_cookies
 
 # Suppress InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -362,23 +361,6 @@ class OMSAPI(object):
 
         return q
 
-    def auth_cert(self, usercert=None, userkey=None):
-        """ CERN SSO authorisation using certificate
-        """
-
-        # Check if user provided custom certificate path
-        if not usercert or not userkey:
-            # Use default location
-            usercert, userkey = get_user_cert()
-
-        try:
-            self.cookies = get_cookies(
-                "https://cmsoms.cern.ch", usercert, userkey, False)
-
-        except:
-            print("Failed to authorize using certificate")
-            exit()
-
     def auth_krb(self, cookie_path="ssocookies.txt"):
         """ Authorisation for https using kerberos"""
 
@@ -389,12 +371,15 @@ class OMSAPI(object):
         rm_file(cookie_path)
 
         try:
-            subprocess.call(["cern-get-sso-cookie", "--krb",
+            subprocess.call(["auth-get-sso-cookie", "--krb",
                              "--nocertverify", "-u", self.api_url, "-o", cookie_path])
         except OSError as e:
             if e.errno == os.errno.ENOENT:
+                #this package is available from CERN repos:
+                #http://linuxsoft.cern.ch/internal/repos/authz7-stable/x86_64/os
+                #http://linuxsoft.cern.ch/internal/repos/authz8-stable/x86_64/os
                 raise OMSApiException(
-                    "Required package is not available. yum install cern-get-sso-cookie")
+                    "Required package is not available. yum install auth-get-sso-cookie")
             else:
                 raise OMSApiException("Failed to authenticate with kerberos")
 
@@ -409,7 +394,7 @@ class OMSAPI(object):
                     # fields = domain tailmatch path secure expires name value
                     key = fields[5]
 
-                    if any(p in key for p in ["_saml_idp", "_shibsession_"]):
+                    if any(p in key for p in ["mod_auth_openidc_session"]):
                         self.cookies[key] = fields[6]
 
         if not self.cookies.keys():

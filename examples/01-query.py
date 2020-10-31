@@ -6,7 +6,7 @@ from __future__ import print_function
 from omsapi import OMSAPI
 
 omsapi = OMSAPI()
-omsapi.auth_cert()
+omsapi.auth_krb()
 
 # Create a query.
 q = omsapi.query("eras")
