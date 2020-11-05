@@ -6,6 +6,8 @@ from __future__ import print_function
 import os
 import requests
 import subprocess
+import json
+import time
 
 # Suppress InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -13,6 +15,11 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 OMS_FILTER_OPERATORS = ["EQ", "NEQ", "LT", "GT", "LE", "GE", "LIKE"]
 OMS_INCLUDES = ["meta", "presentation_timestamp", "data_only"]
+
+#OpenID parameters
+cern_auth_token_url='https://auth.cern.ch/auth/realms/cern/protocol/openid-connect/token'
+grant_type='client_credentials'
+exc_token_type='access_token'
 
 class OMSApiException(Exception):
     """ OMS API Client Exception """
@@ -22,12 +29,13 @@ class OMSApiException(Exception):
 class OMSQuery(object):
     """ OMS Query object """
 
-    def __init__(self, base_url, resource, verbose, cookies):
+    def __init__(self, base_url, resource, verbose, cookies, oms_auth):
         self.attribute_validation = True
         self.base_url = base_url
         self.resource = resource
         self.verbose = verbose
         self.cookies = cookies
+        self.oms_auth = oms_auth
 
         self._attrs = None  # Projection
         self._filter = []  # Filtering
@@ -69,7 +77,7 @@ class OMSQuery(object):
         url = "{base_url}/{resource}/meta".format(base_url=self.base_url,
                                                   resource=resourceBase)
 
-        response = requests.get(url, verify=False, cookies=self.cookies)
+        response = self.get_request(url, verify=False)
 
         if response.status_code != 200:
             self._warn("Failed to fetch meta information")
@@ -328,7 +336,7 @@ class OMSQuery(object):
         if self.verbose:
             print(url)
 
-        return requests.get(url, verify=False, cookies=self.cookies)
+        return self.get_request(url, verify=False)
 
     def meta(self):
         """ Returns metadata of a resource.
@@ -339,7 +347,69 @@ class OMSQuery(object):
         """
         return self.metadata
 
+    def get_request(self, url, verify=False):
+        if self.oms_auth:
+            response = requests.get(url, verify, headers=self.oms_auth.token_headers)
+            #check if token has expired (Unauthorized)
+            if response.status_code == 401:
+                self.oms_auth.auth_oidc()
+                return requests.get(url, verify, headers=self.oms_auth.token_headers)
+            return response
+        else:
+            return requests.get(url, verify, cookies=self.cookies)
+ 
+class OMSAPIOAuth(object):
+    """ OMS API token store and manager """
 
+    def __init__(self, client_id, client_secret, audience="cmsoms"):
+        self.audience = audience
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.token_json = None
+        self.token_time = None
+ 
+    def auth_oidc(self):
+        """ Authorisation Using CERN Open ID authentication """
+
+        current_time = time.time()
+        if self.token_json and self.token_time:
+            if current_time - self.token_time < 30:
+                print("Warning: token was requested less than 30 seconds ago. Will not renew this time.")
+                return
+                
+        self.token_time = current_time
+        token_req_data = {
+            'grant_type': grant_type,
+            'client_id': self.client_id,
+            'client_secret': self.client_secret
+        }
+        #cert verification disabled
+        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=False)
+        if ret.status_code!=200:
+            raise Exception("Unable to acquire OAuth token: " + ret.content.decode())
+
+        res = json.loads(ret.content)
+
+        exchange_data = {
+            'grant_type': grant_type,
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'subject_token': res['access_token'],
+            'audience': self.audience
+        }
+        exchange_params={
+            'grant_type':'=urn:ietf:params:oauth:grant-type:token-exchange',
+            'requested_token_type':'urn:ietf:params:oauth:token-type:'+ exc_token_type
+        }
+        #cert verification disabled
+        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=False)
+        if ret.status_code!=200:
+            raise Exception("Unable to exchange OAuth token: " + ret.content.decode())
+
+        self.token_json = json.loads(ret.content)
+        self.token_headers = {'Authorization':'Bearer ' + self.token_json["access_token"]}
+
+ 
 class OMSAPI(object):
     """ Base OMS API client """
 
@@ -351,15 +421,23 @@ class OMSAPI(object):
         self.base_url = "{api_url}/{api_version}".format(api_url=api_url,
                                                          api_version=api_version)
 
+        self.oms_auth = None
         self.cookies = {}
 
     def query(self, resource, query_validation=True):
         """ Create query object """
 
         q = OMSQuery(self.base_url, resource=resource,
-                     verbose=self.verbose, cookies=self.cookies)
+                     verbose=self.verbose, cookies=self.cookies, oms_auth=self.oms_auth)
 
         return q
+
+    def auth_oidc(self, client_id, client_secret, audience="cmsoms"):
+        """ Authorisation Using CERN Open ID authentication """
+
+        if not self.oms_auth:
+            self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience)
+        self.oms_auth.auth_oidc()
 
     def auth_krb(self, cookie_path="ssocookies.txt"):
         """ Authorisation for https using kerberos"""
