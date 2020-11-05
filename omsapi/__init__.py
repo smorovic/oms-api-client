@@ -352,6 +352,7 @@ class OMSQuery(object):
             response = requests.get(url, verify, headers=self.oms_auth.token_headers)
             #check if token has expired (Unauthorized)
             if response.status_code == 401:
+                print("Unauthorized. Will try to obtain a new token")
                 self.oms_auth.auth_oidc()
                 return requests.get(url, verify, headers=self.oms_auth.token_headers)
             return response

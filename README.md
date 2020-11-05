@@ -26,19 +26,19 @@ python3 setup.py bdist_rpm
 
 ## Requirements
 
-Download certificate (*.p12) from https://ca.cern.ch/ca/ (New Grid User Certificate)
+auth_oidc() requires registered CERN OpenID application. It can be created
+by any user on https://application-portal.web.cern.ch/
+When registering application with SSO, select option allowing application to
+request tokens itself. Copy client id and client secret and use them as parameters
+of auth_oidc().
 
-**Certificate must be passwordless**
+You can request rights for token exchange with the target application ID (audience parameter),
+and/or ask cmsoms-developers to grant token access to your application.
 
-```
-mkdir -p ~/private
-
-# Leave Import Password blank
-# PEM passphrase is required to be set
-openssl pkcs12 -clcerts -nokeys -in myCertificate.p12 -out ~/private/usercert.pem
-openssl pkcs12 -nocerts -in myCertificate.p12 -out ~/private/userkey.tmp.pem
-openssl rsa -in ~/private/userkey.tmp.pem -out ~/private/userkey.pem
-```
+Audience parameter defaults to application ID 'cmsoms'. For testing, also these instances are available:
+"cmsoms-dev-0185"
+"cmsoms-dev-0184"
+"cmsoms-dev-0185"
 
 # Examples
 
@@ -46,8 +46,12 @@ openssl rsa -in ~/private/userkey.tmp.pem -out ~/private/userkey.pem
 ```
 from omsapi import OMSAPI
 
+#fill your values
+my_app_id='omsapi_test_id'
+my_app_secret='2398938-30389039-33'
+
 omsapi = OMSAPI()
-omsapi.auth_cert()
+omsapi.auth_oidc(my_app_id,my_app_secret)
 
 # Create a query.
 q = omsapi.query("eras")
@@ -64,7 +68,7 @@ print(response.json())
 from omsapi import OMSAPI
 
 omsapi = OMSAPI()
-omsapi.auth_cert()
+omsapi.auth_oidc(my_app_id,my_app_secret)
 
 # Create a query
 q = omsapi.query("runs")
@@ -93,26 +97,6 @@ Example:
 from omsapi import OMSAPI
 
 omsapi = OMSAPI()
-```
-
-### Authenticate using certificate
-omsapi.auth_cert(*usercert*, *userkey*) - set user certificate path (recommended to keep default values)
-
-* usercert - full path to certificate file
-* userkey - full path to certificate key file
-
-Example:
-```
-omsapi.auth_cert()
-```
-
-Set these values ONLY if:
-* your user certificate is NOT in `~/private` or `~/.globus` folders
-* certificate names ane NOT `usercert.pem` and `userkey.pem`
-
-Example:
-```
-omsapi.auth_cert("/home/myuser/.cert/crt.pem", "/home/myuser/.cert/key.pem") 
 ```
 
 ### Create query
@@ -236,7 +220,7 @@ print(url)
 
 ## Alternative Auth option
 
-Instead of auth with certificate you can use Kerberos authentication.
+Instead of auth with OpenID you can use Kerberos authentication.
 
 This works **ONLY** with CERN managed CC7 machines.
 
