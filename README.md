@@ -27,18 +27,25 @@ python3 setup.py bdist_rpm
 ## Requirements
 
 auth_oidc() requires registered CERN OpenID application. It can be created
-by any user on https://application-portal.web.cern.ch/
-When registering application with SSO, select option allowing application to
+by any user on the Application Portal: https://application-portal.web.cern.ch/
+When doing the step of SSO Registration, select option allowing application to
 request tokens itself. Copy client id and client secret and use them as parameters
 of auth_oidc().
 
-You can request rights for token exchange with the target application ID (audience parameter),
-and/or ask cmsoms-developers to grant token access to your application.
+You will need to request rights for token exchange with the target application ID (audience parameter, see below for available IDs),
+and/or ask cmsoms-developers to grant token access to your application from the Application Portal.
 
-Audience parameter defaults to application ID 'cmsoms'. For testing, also these instances are available:
-"cmsoms-dev-0185"
+Audience parameter defaults to application ID 'cmsoms'. For testing, athese instance indentifier are available:
+```
+"cmsoms-dev-0183"
 "cmsoms-dev-0184"
-"cmsoms-dev-0185"
+"cmsoms-int-0185"
+```
+
+Once production OMS moves to OpenID, it will have identifier:
+```
+"cmsoms-prod"
+```
 
 # Examples
 
