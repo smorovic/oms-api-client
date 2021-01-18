@@ -21,13 +21,13 @@ python3 setup.py install --user
 ## Build RPM (CC7/python 3.6):
 ```
 cd oms-api-client
-python3.6 setup.py bdist_rpm --python3.6
+python3.6 setup.py bdist_rpm --python python3.6 --release 0.cc7
 ```
 
 ## Build RPM (CC8/python 3.8):
 ```
 cd oms-api-client
-python3.8 setup.py bdist_rpm --python3.8
+python3.8 setup.py bdist_rpm --python python3.8 --release 0.cc8
 ```
 
 ## Requirements
