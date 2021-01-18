@@ -32,20 +32,20 @@ When doing the step of SSO Registration, select option allowing application to
 request tokens itself. Copy client id and client secret and use them as parameters
 of auth_oidc().
 
-You will need to request rights for token exchange with the target application ID (audience parameter, see below for available IDs),
-and/or ask cmsoms-developers to grant token access to your application from the Application Portal.
+You will need to request rights for token exchange with the target application ID (audience parameter, see below for available IDs).
+After creating the application, click on the new application -> `SSO Registration` -> `Token Exchange Permissions` button in the portal.
+There you can request token exchange, by specifying target application ID (use same as audience parameter). We also advise to send a mail to
+cmsoms-developers@cern.ch or cmsoms-operations@cern.ch to ask responsible maintainers to approve your application request.
 
-Audience parameter defaults to application ID 'cmsoms'. For testing, athese instance indentifier are available:
+Audience parameter defaults to application ID 'cmsoms-prod'. Corresponding IDs for OMS instances are:
 ```
-"cmsoms-dev-0183"
-"cmsoms-dev-0184"
-"cmsoms-int-0185"
+cmsoms-int-0184 - for Development access
+cmsoms-int-0185 - for Integration access
+cmsoms-prod - for Production access
 ```
 
-Once production OMS moves to OpenID, it will have identifier:
-```
-"cmsoms-prod"
-```
+Production OMS is currently not using OpenID. Once all current clients are ready to migrate to OpenID, it wil be activated. For development
+prior to this, other instances should be used for development.
 
 # Examples
 
@@ -229,8 +229,9 @@ print(url)
 
 Instead of auth with OpenID you can use Kerberos authentication.
 
-This works **ONLY** with CERN managed CC7 machines.
+This depends on cern-get-sso-cookie RPM which works **ONLY** with CERN managed CC7 and CC8 machines (lxplus and OMS wbmportal hostgroup machines).
 
+Installation, if available:
 ```
 sudo yum install cern-get-sso-cookie
 ```

@@ -5,10 +5,15 @@
 from __future__ import print_function
 from omsapi import OMSAPI
 
-omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
+# Authenticate using OAuth token exchange of the user-owned application (needs to be authorized by OMS admins)
 
-# Authenticate using kerberos
-omsapi.auth_oauth()
+#integration OMS:
+omsapi = OMSAPI("http://vocms0185.cern.ch/agg/api", "v1")
+omsapi.auth_oidc("your-client-app-identifier", "your-client-app-secret", audience="cmsoms-int-0185")
+
+#production OMS:
+#omsapi = OMSAPI("http://cmsoms.cern.ch/agg/api", "v1")
+#omsapi.auth_oidc("your-client-app-identifier", "your-client-app-secret", audience="cmsoms-prod")
 
 # Create a query.
 q = omsapi.query("eras")

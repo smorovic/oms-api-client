@@ -349,12 +349,12 @@ class OMSQuery(object):
 
     def get_request(self, url, verify=False):
         if self.oms_auth:
-            response = requests.get(url, verify, headers=self.oms_auth.token_headers)
+            response = requests.get(url, verify=verify, headers=self.oms_auth.token_headers)
             #check if token has expired (Unauthorized)
             if response.status_code == 401:
                 print("Unauthorized. Will try to obtain a new token")
                 self.oms_auth.auth_oidc()
-                return requests.get(url, verify, headers=self.oms_auth.token_headers)
+                return requests.get(url, verify=verify, headers=self.oms_auth.token_headers)
             return response
         else:
             return requests.get(url, verify, cookies=self.cookies)
@@ -362,7 +362,7 @@ class OMSQuery(object):
 class OMSAPIOAuth(object):
     """ OMS API token store and manager """
 
-    def __init__(self, client_id, client_secret, audience="cmsoms"):
+    def __init__(self, client_id, client_secret, audience="cmsoms-prod"):
         self.audience = audience
         self.client_id = client_id
         self.client_secret = client_secret
@@ -392,16 +392,14 @@ class OMSAPIOAuth(object):
         res = json.loads(ret.content)
 
         exchange_data = {
-            'grant_type': grant_type,
             'client_id': self.client_id,
             'client_secret': self.client_secret,
             'subject_token': res['access_token'],
-            'audience': self.audience
-        }
-        exchange_params={
-            'grant_type':'=urn:ietf:params:oauth:grant-type:token-exchange',
+            'audience': self.audience,
+            'grant_type':'urn:ietf:params:oauth:grant-type:token-exchange',
             'requested_token_type':'urn:ietf:params:oauth:token-type:'+ exc_token_type
         }
+
         #cert verification disabled
         ret = requests.post(cern_auth_token_url, data=exchange_data, verify=False)
         if ret.status_code!=200:
@@ -433,7 +431,7 @@ class OMSAPI(object):
 
         return q
 
-    def auth_oidc(self, client_id, client_secret, audience="cmsoms"):
+    def auth_oidc(self, client_id, client_secret, audience="cmsoms-prod"):
         """ Authorisation Using CERN Open ID authentication """
 
         if not self.oms_auth:
