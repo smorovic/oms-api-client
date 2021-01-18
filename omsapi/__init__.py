@@ -29,13 +29,14 @@ class OMSApiException(Exception):
 class OMSQuery(object):
     """ OMS Query object """
 
-    def __init__(self, base_url, resource, verbose, cookies, oms_auth):
+    def __init__(self, base_url, resource, verbose, cookies, oms_auth, cert_verify):
         self.attribute_validation = True
         self.base_url = base_url
         self.resource = resource
         self.verbose = verbose
         self.cookies = cookies
         self.oms_auth = oms_auth
+        self.cert_verify = cert_verify
 
         self._attrs = None  # Projection
         self._filter = []  # Filtering
@@ -77,7 +78,7 @@ class OMSQuery(object):
         url = "{base_url}/{resource}/meta".format(base_url=self.base_url,
                                                   resource=resourceBase)
 
-        response = self.get_request(url, verify=False)
+        response = self.get_request(url, verify=self.cert_verify)
 
         if response.status_code != 200:
             self._warn("Failed to fetch meta information")
@@ -336,7 +337,7 @@ class OMSQuery(object):
         if self.verbose:
             print(url)
 
-        return self.get_request(url, verify=False)
+        return self.get_request(url, verify=self.cert_verify)
 
     def meta(self):
         """ Returns metadata of a resource.
@@ -357,15 +358,16 @@ class OMSQuery(object):
                 return requests.get(url, verify=verify, headers=self.oms_auth.token_headers)
             return response
         else:
-            return requests.get(url, verify, cookies=self.cookies)
+            return requests.get(url, verify=verify, cookies=self.cookies)
  
 class OMSAPIOAuth(object):
     """ OMS API token store and manager """
 
-    def __init__(self, client_id, client_secret, audience="cmsoms-prod"):
-        self.audience = audience
+    def __init__(self, client_id, client_secret, audience="cmsoms-prod", cert_verify=True):
         self.client_id = client_id
         self.client_secret = client_secret
+        self.audience = audience
+        self.cert_verify=cert_verify
         self.token_json = None
         self.token_time = None
  
@@ -384,8 +386,7 @@ class OMSAPIOAuth(object):
             'client_id': self.client_id,
             'client_secret': self.client_secret
         }
-        #cert verification disabled
-        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=False)
+        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=self.cert_verify)
         if ret.status_code!=200:
             raise Exception("Unable to acquire OAuth token: " + ret.content.decode())
 
@@ -401,7 +402,7 @@ class OMSAPIOAuth(object):
         }
 
         #cert verification disabled
-        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=False)
+        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=self.cert_verify)
         if ret.status_code!=200:
             raise Exception("Unable to exchange OAuth token: " + ret.content.decode())
 
@@ -412,10 +413,11 @@ class OMSAPIOAuth(object):
 class OMSAPI(object):
     """ Base OMS API client """
 
-    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True):
+    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True, cert_verify=True):
         self.api_url = api_url
         self.api_version = api_version
         self.verbose = verbose
+        self.cert_verify = cert_verify 
 
         self.base_url = "{api_url}/{api_version}".format(api_url=api_url,
                                                          api_version=api_version)
@@ -426,8 +428,8 @@ class OMSAPI(object):
     def query(self, resource, query_validation=True):
         """ Create query object """
 
-        q = OMSQuery(self.base_url, resource=resource,
-                     verbose=self.verbose, cookies=self.cookies, oms_auth=self.oms_auth)
+        q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose,
+                     cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify)
 
         return q
 
@@ -435,7 +437,7 @@ class OMSAPI(object):
         """ Authorisation Using CERN Open ID authentication """
 
         if not self.oms_auth:
-            self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience)
+            self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience, self.cert_verify)
         self.oms_auth.auth_oidc()
 
     def auth_krb(self, cookie_path="ssocookies.txt"):
