@@ -103,7 +103,7 @@ print(response.json())
 ## OMSAPI Class
 
 ### Create API client
-constructor OMSAPI(*url*, *version="v1"*) - set API endpoint and version (recommended to keep default values)
+constructor OMSAPI(*url*, *version="v1"*, cert_verify=True|False) - set API endpoint and version (recommended to keep default values)
 
 Example:
 ```
