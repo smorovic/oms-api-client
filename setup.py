@@ -31,7 +31,7 @@ setuptools.setup(
 
     name=python_version+'omsapi',
 
-    version='0.8.2',
+    version='0.8.3',
 
     author="Mantas Stankevicius",
 
