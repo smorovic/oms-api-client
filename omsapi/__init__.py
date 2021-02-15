@@ -422,6 +422,12 @@ class OMSAPI(object):
         self.base_url = "{api_url}/{api_version}".format(api_url=api_url,
                                                          api_version=api_version)
 
+        index =  self.api_url.find('://')
+        if index >= 0:
+            tmp = self.api_url[index + 3 : ]
+            self.api_url_host = self.api_url[: index + 3] + tmp[: tmp.find('/')]
+        else:
+            self.api_url_host = self.api_url_host[: self.api_url_host.find('/')]
         self.oms_auth = None
         self.cookies = {}
 
@@ -448,10 +454,11 @@ class OMSAPI(object):
                 os.remove(filename)
 
         rm_file(cookie_path)
-
+        args = ["auth-get-sso-cookie", "-u", self.api_url_host, "-o", cookie_path]
+        if not self.cert_verify:
+            args.append("--nocertverify")
         try:
-            subprocess.call(["auth-get-sso-cookie", "--krb",
-                             "--nocertverify", "-u", self.api_url, "-o", cookie_path])
+            subprocess.call(args)
         except OSError as e:
             if e.errno == os.errno.ENOENT:
                 #this package is available from CERN repos:
