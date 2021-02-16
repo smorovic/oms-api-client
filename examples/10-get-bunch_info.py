@@ -25,7 +25,8 @@ args = parser.parse_args()
 if args.configured:
     args.pilot = True
 
-omsapi = OMSAPI("http://vocms0183/agg/api", "v1") # this is the OMS development machine, don't use for production
+omsapi = OMSAPI("https://vocms0183.cern.ch/agg/api", "v1") # this is the OMS development machine, don't use for production
+omsapi.auth_krb()
 
 
 # Create a query.

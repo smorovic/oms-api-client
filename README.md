@@ -11,34 +11,47 @@ python3 -m pip install -r requirements.txt
 python3 setup.py install --user
 ```
 
-## Update
+## Update (CC7)
 ```
 cd oms-api-client
 git pull
 python3 setup.py install --user
 ```
 
-## Build RPM
+## Build RPM (CC7/python 3.6):
 ```
 cd oms-api-client
-python3 setup.py bdist_rpm
+python3.6 setup.py bdist_rpm --python python3.6 --release 0.cc7
+```
+
+## Build RPM (CC8/python 3.8):
+```
+cd oms-api-client
+python3.8 setup.py bdist_rpm --python python3.8 --release 0.cc8
 ```
 
 ## Requirements
 
-Download certificate (*.p12) from https://ca.cern.ch/ca/ (New Grid User Certificate)
+auth_oidc() requires registered CERN OpenID application. It can be created
+by any user on the Application Portal: https://application-portal.web.cern.ch/
+When doing the step of SSO Registration, select option allowing application to
+request tokens itself. Copy client id and client secret and use them as parameters
+of auth_oidc().
 
-**Certificate must be passwordless**
+You will need to request rights for token exchange with the target application ID (audience parameter, see below for available IDs).
+After creating the application, click on the new application -> `SSO Registration` -> `Token Exchange Permissions` button in the portal.
+There you can request token exchange, by specifying target application ID (use same as audience parameter). We also advise to send a mail to
+cmsoms-developers@cern.ch or cmsoms-operations@cern.ch to ask responsible maintainers to approve your application request.
 
+Audience parameter defaults to application ID 'cmsoms-prod'. Corresponding IDs for OMS instances are:
 ```
-mkdir -p ~/private
-
-# Leave Import Password blank
-# PEM passphrase is required to be set
-openssl pkcs12 -clcerts -nokeys -in myCertificate.p12 -out ~/private/usercert.pem
-openssl pkcs12 -nocerts -in myCertificate.p12 -out ~/private/userkey.tmp.pem
-openssl rsa -in ~/private/userkey.tmp.pem -out ~/private/userkey.pem
+cmsoms-int-0184 - for Development access
+cmsoms-int-0185 - for Integration access
+cmsoms-prod - for Production access
 ```
+
+Production OMS is currently not using OpenID. Once all current clients are ready to migrate to OpenID, it wil be activated. For development
+prior to this, other instances should be used for development.
 
 # Examples
 
@@ -46,8 +59,12 @@ openssl rsa -in ~/private/userkey.tmp.pem -out ~/private/userkey.pem
 ```
 from omsapi import OMSAPI
 
+#fill your values
+my_app_id='omsapi_test_id'
+my_app_secret='2398938-30389039-33'
+
 omsapi = OMSAPI()
-omsapi.auth_cert()
+omsapi.auth_oidc(my_app_id,my_app_secret)
 
 # Create a query.
 q = omsapi.query("eras")
@@ -64,7 +81,7 @@ print(response.json())
 from omsapi import OMSAPI
 
 omsapi = OMSAPI()
-omsapi.auth_cert()
+omsapi.auth_oidc(my_app_id,my_app_secret)
 
 # Create a query
 q = omsapi.query("runs")
@@ -86,33 +103,13 @@ print(response.json())
 ## OMSAPI Class
 
 ### Create API client
-constructor OMSAPI(*url*, *version="v1"*) - set API endpoint and version (recommended to keep default values)
+constructor OMSAPI(*url*, *version="v1"*, cert_verify=True|False) - set API endpoint and version (recommended to keep default values)
 
 Example:
 ```
 from omsapi import OMSAPI
 
 omsapi = OMSAPI()
-```
-
-### Authenticate using certificate
-omsapi.auth_cert(*usercert*, *userkey*) - set user certificate path (recommended to keep default values)
-
-* usercert - full path to certificate file
-* userkey - full path to certificate key file
-
-Example:
-```
-omsapi.auth_cert()
-```
-
-Set these values ONLY if:
-* your user certificate is NOT in `~/private` or `~/.globus` folders
-* certificate names ane NOT `usercert.pem` and `userkey.pem`
-
-Example:
-```
-omsapi.auth_cert("/home/myuser/.cert/crt.pem", "/home/myuser/.cert/key.pem") 
 ```
 
 ### Create query
@@ -236,10 +233,11 @@ print(url)
 
 ## Alternative Auth option
 
-Instead of auth with certificate you can use Kerberos authentication.
+Instead of auth with OpenID you can use Kerberos authentication.
 
-This works **ONLY** with CERN managed CC7 machines.
+This depends on cern-get-sso-cookie RPM which works **ONLY** with CERN managed CC7 and CC8 machines (lxplus and OMS wbmportal hostgroup machines).
 
+Installation, if available:
 ```
 sudo yum install cern-get-sso-cookie
 ```
