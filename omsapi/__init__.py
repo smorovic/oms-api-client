@@ -363,11 +363,12 @@ class OMSQuery(object):
 class OMSAPIOAuth(object):
     """ OMS API token store and manager """
 
-    def __init__(self, client_id, client_secret, audience="cmsoms-prod", cert_verify=True):
+    def __init__(self, client_id, client_secret, audience="cmsoms-prod", cert_verify=True, proxies={}):
         self.client_id = client_id
         self.client_secret = client_secret
         self.audience = audience
-        self.cert_verify=cert_verify
+        self.cert_verify = cert_verify
+        self.proxies = proxies
         self.token_json = None
         self.token_time = None
  
@@ -386,7 +387,7 @@ class OMSAPIOAuth(object):
             'client_id': self.client_id,
             'client_secret': self.client_secret
         }
-        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=self.cert_verify)
+        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=self.cert_verify, proxies=proxies)
         if ret.status_code!=200:
             raise Exception("Unable to acquire OAuth token: " + ret.content.decode())
 
@@ -402,7 +403,7 @@ class OMSAPIOAuth(object):
         }
 
         #cert verification disabled
-        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=self.cert_verify)
+        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=self.cert_verify, proxies=proxies)
         if ret.status_code!=200:
             raise Exception("Unable to exchange OAuth token: " + ret.content.decode())
 
@@ -439,11 +440,11 @@ class OMSAPI(object):
 
         return q
 
-    def auth_oidc(self, client_id, client_secret, audience="cmsoms-prod"):
+    def auth_oidc(self, client_id, client_secret, audience="cmsoms-prod", proxies={}):
         """ Authorisation Using CERN Open ID authentication """
 
         if not self.oms_auth:
-            self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience, self.cert_verify)
+            self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience, self.cert_verify, proxies=proxies)
         self.oms_auth.auth_oidc()
 
     def auth_krb(self, cookie_path="ssocookies.txt"):
