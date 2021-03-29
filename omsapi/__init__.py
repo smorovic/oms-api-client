@@ -387,7 +387,7 @@ class OMSAPIOAuth(object):
             'client_id': self.client_id,
             'client_secret': self.client_secret
         }
-        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=self.cert_verify, proxies=proxies)
+        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=self.cert_verify, proxies=self.proxies)
         if ret.status_code!=200:
             raise Exception("Unable to acquire OAuth token: " + ret.content.decode())
 
