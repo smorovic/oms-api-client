@@ -403,7 +403,7 @@ class OMSAPIOAuth(object):
         }
 
         #cert verification disabled
-        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=self.cert_verify, proxies=proxies)
+        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=self.cert_verify, proxies=self.proxies)
         if ret.status_code!=200:
             raise Exception("Unable to exchange OAuth token: " + ret.content.decode())
 
