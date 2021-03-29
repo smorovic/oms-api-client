@@ -11,7 +11,9 @@ import time
 
 # Suppress InsecureRequestWarning
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests.exceptions import ConnectionError
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
 
 OMS_FILTER_OPERATORS = ["EQ", "NEQ", "LT", "GT", "LE", "GE", "LIKE"]
 OMS_INCLUDES = ["meta", "presentation_timestamp", "data_only"]
@@ -29,7 +31,7 @@ class OMSApiException(Exception):
 class OMSQuery(object):
     """ OMS Query object """
 
-    def __init__(self, base_url, resource, verbose, cookies, oms_auth, cert_verify):
+    def __init__(self, base_url, resource, verbose, cookies, oms_auth, cert_verify, retry_on_err_sec):
         self.attribute_validation = True
         self.base_url = base_url
         self.resource = resource
@@ -37,6 +39,7 @@ class OMSQuery(object):
         self.cookies = cookies
         self.oms_auth = oms_auth
         self.cert_verify = cert_verify
+        self.err_sec = retry_on_err_sec
 
         self._attrs = None  # Projection
         self._filter = []  # Filtering
@@ -336,8 +339,18 @@ class OMSQuery(object):
 
         if self.verbose:
             print(url)
+        if self.err_sec > 0:
+            while True:
+                try:
+                    ret = self.get_request(url, verify=self.cert_verify)
+                    break
+                except ConnectionError as ex:
+                    print("Warning: will retry in " + str(self.err_sec) + "seconds after connection error: " + str(ex))
+                    time.sleep(self.err_sec)
+        else:
+            ret = self.get_request(url, verify=self.cert_verify)
 
-        return self.get_request(url, verify=self.cert_verify)
+        return ret
 
     def meta(self):
         """ Returns metadata of a resource.
@@ -363,15 +376,30 @@ class OMSQuery(object):
 class OMSAPIOAuth(object):
     """ OMS API token store and manager """
 
-    def __init__(self, client_id, client_secret, audience="cmsoms-prod", cert_verify=True):
+    def __init__(self, client_id, client_secret, audience="cmsoms-prod", cert_verify=True, proxies={}, retry_on_err_sec=0):
         self.client_id = client_id
         self.client_secret = client_secret
         self.audience = audience
-        self.cert_verify=cert_verify
+        self.cert_verify = cert_verify
+        self.proxies = proxies
         self.token_json = None
         self.token_time = None
+        self.err_sec = retry_on_err_sec
  
     def auth_oidc(self):
+        """ Authorisation Using CERN Open ID authentication wrappeer"""
+        if self.err_sec > 0:
+            while True:
+                try:
+                    ret = self.auth_oidc_req()
+                    return ret
+                except ConnectionError as ex:
+                    print("Warning: will retry auth_oidc in " + str(self.err_sec) + "seconds after connection error: " + str(ex))
+                    time.sleep(self.err_sec)
+        else:
+            return self.auth_oidc_req()
+
+    def auth_oidc_req(self):
         """ Authorisation Using CERN Open ID authentication """
 
         current_time = time.time()
@@ -386,7 +414,7 @@ class OMSAPIOAuth(object):
             'client_id': self.client_id,
             'client_secret': self.client_secret
         }
-        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=self.cert_verify)
+        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=self.cert_verify, proxies=self.proxies)
         if ret.status_code!=200:
             raise Exception("Unable to acquire OAuth token: " + ret.content.decode())
 
@@ -402,7 +430,7 @@ class OMSAPIOAuth(object):
         }
 
         #cert verification disabled
-        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=self.cert_verify)
+        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=self.cert_verify, proxies=self.proxies)
         if ret.status_code!=200:
             raise Exception("Unable to exchange OAuth token: " + ret.content.decode())
 
@@ -413,11 +441,12 @@ class OMSAPIOAuth(object):
 class OMSAPI(object):
     """ Base OMS API client """
 
-    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True, cert_verify=True):
+    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True, cert_verify=True, retry_on_err_sec=0):
         self.api_url = api_url
         self.api_version = api_version
         self.verbose = verbose
         self.cert_verify = cert_verify 
+        self.err_sec = retry_on_err_sec
 
         self.base_url = "{api_url}/{api_version}".format(api_url=api_url,
                                                          api_version=api_version)
@@ -435,15 +464,15 @@ class OMSAPI(object):
         """ Create query object """
 
         q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose,
-                     cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify)
+                     cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify, retry_on_err_sec=self.err_sec)
 
         return q
 
-    def auth_oidc(self, client_id, client_secret, audience="cmsoms-prod"):
+    def auth_oidc(self, client_id, client_secret, audience="cmsoms-prod", proxies={}):
         """ Authorisation Using CERN Open ID authentication """
 
         if not self.oms_auth:
-            self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience, self.cert_verify)
+            self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience, self.cert_verify, proxies=proxies, retry_on_err_sec=self.err_sec)
         self.oms_auth.auth_oidc()
 
     def auth_krb(self, cookie_path="ssocookies.txt"):
