@@ -31,7 +31,7 @@ class OMSApiException(Exception):
 class OMSQuery(object):
     """ OMS Query object """
 
-    def __init__(self, base_url, resource, verbose, cookies, oms_auth, cert_verify, retry_on_err_sec):
+    def __init__(self, base_url, resource, verbose, cookies, oms_auth, cert_verify, retry_on_err_sec, proxies):
         self.attribute_validation = True
         self.base_url = base_url
         self.resource = resource
@@ -40,6 +40,7 @@ class OMSQuery(object):
         self.oms_auth = oms_auth
         self.cert_verify = cert_verify
         self.err_sec = retry_on_err_sec
+        self.proxies = proxies
 
         self._attrs = None  # Projection
         self._filter = []  # Filtering
@@ -363,15 +364,15 @@ class OMSQuery(object):
 
     def get_request(self, url, verify=False):
         if self.oms_auth:
-            response = requests.get(url, verify=verify, headers=self.oms_auth.token_headers)
+            response = requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies)
             #check if token has expired (Unauthorized)
             if response.status_code == 401:
                 print("Unauthorized. Will try to obtain a new token")
                 self.oms_auth.auth_oidc()
-                return requests.get(url, verify=verify, headers=self.oms_auth.token_headers)
+                return requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies)
             return response
         else:
-            return requests.get(url, verify=verify, cookies=self.cookies)
+            return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies)
  
 class OMSAPIOAuth(object):
     """ OMS API token store and manager """
@@ -441,12 +442,13 @@ class OMSAPIOAuth(object):
 class OMSAPI(object):
     """ Base OMS API client """
 
-    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True, cert_verify=True, retry_on_err_sec=0):
+    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True, cert_verify=True, retry_on_err_sec=0, proxies={}):
         self.api_url = api_url
         self.api_version = api_version
         self.verbose = verbose
         self.cert_verify = cert_verify 
         self.err_sec = retry_on_err_sec
+        self.proxies = proxies
 
         self.base_url = "{api_url}/{api_version}".format(api_url=api_url,
                                                          api_version=api_version)
@@ -464,7 +466,7 @@ class OMSAPI(object):
         """ Create query object """
 
         q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose,
-                     cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify, retry_on_err_sec=self.err_sec)
+                     cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify, retry_on_err_sec=self.err_sec, proxies=self.proxies)
 
         return q
 
