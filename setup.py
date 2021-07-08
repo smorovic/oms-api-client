@@ -57,7 +57,7 @@ setuptools.setup(
 
         "Operating System :: OS Independent",
 
-    ]#,
-    #setup_requires = ['requests']
+    ],
+    install_requires = ['requests']
 
 )
