@@ -31,7 +31,7 @@ setuptools.setup(
 
     name=python_version+'omsapi',
 
-    version='0.8.6',
+    version='0.8.8',
 
     author="Mantas Stankevicius",
 
@@ -57,6 +57,7 @@ setuptools.setup(
 
         "Operating System :: OS Independent",
 
-    ],
+    ]#,
+    #setup_requires = ['requests']
 
 )

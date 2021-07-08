@@ -45,9 +45,9 @@ cmsoms-developers@cern.ch or cmsoms-operations@cern.ch to ask responsible mainta
 
 Audience parameter defaults to application ID 'cmsoms-prod'. Corresponding IDs for OMS instances are:
 ```
-cmsoms-int-0184 - for Development access
-cmsoms-int-0185 - for Integration access
-cmsoms-prod - for Production access
+cmsoms-int-0184 - for Development access (https://vocms0184.cern.ch)
+cmsoms-int-0185 - for Integration access (https://vocms0185.cern.ch)
+cmsoms-prod - for Production access (https://cmsoms.cern.ch)
 ```
 
 Production OMS is currently not using OpenID. Once all current clients are ready to migrate to OpenID, it wil be activated. For development
@@ -63,7 +63,7 @@ from omsapi import OMSAPI
 my_app_id='omsapi_test_id'
 my_app_secret='2398938-30389039-33'
 
-omsapi = OMSAPI()
+omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1", cert_verify=False)
 omsapi.auth_oidc(my_app_id,my_app_secret)
 
 # Create a query.
@@ -239,7 +239,7 @@ This depends on cern-get-sso-cookie RPM which works **ONLY** with CERN managed C
 
 Installation, if available:
 ```
-sudo yum install cern-get-sso-cookie
+sudo yum install auth-get-sso-cookie
 ```
 
 see example [07-sso-krb.py](examples/07-sso-krb.py)
