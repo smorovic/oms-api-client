@@ -17,6 +17,10 @@ def custom_make_spec_file(self):
     spec = self._original_make_spec_file()
     lineDescription = "%description"
     spec.insert(spec.index(lineDescription) - 1, "requires: %s" % RPM_REQUIRED_DEPS)
+    for index,line in enumerate(spec):
+        if line.startswith('%define name'):
+            spec[index] = '%define name ' + python_version + 'omsapi'
+            break
     return spec
 bdist_rpm._original_make_spec_file = bdist_rpm._make_spec_file
 bdist_rpm._make_spec_file = custom_make_spec_file
@@ -29,7 +33,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
 
-    name=python_version+'omsapi',
+    name='omsapi',
 
     version='0.8.8',
 
