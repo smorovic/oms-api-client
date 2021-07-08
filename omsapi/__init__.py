@@ -497,8 +497,15 @@ class OMSAPI(object):
                 args.append("--nocertverify")
         else:
             #needed with CMSSW which overrides Python env and auth-get-sso-cookie fails
+
+            #ensure same kerberos cache is used
+            try:
+                krbenv= "KRB5CCNAME=" + os.environ["KRB5CCNAME"] + " "
+            except:
+                krbenv=""
+            
             nocert = "--nocertverify" if not self.cert_verify else ""
-            args = ['/bin/env', '-i', 'bash', '-c', '-l', f'auth-get-sso-cookie -u {self.api_url_host} -o {cookie_path} {nocert}']
+            args = ['/bin/env', '-i', 'bash', '-c', '-l', f'{krbenv}auth-get-sso-cookie -u {self.api_url_host} -o {cookie_path} {nocert}']
 
         try:
             subprocess.call(args)
