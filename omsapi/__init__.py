@@ -84,7 +84,9 @@ class OMSQuery(object):
 
         response = self.get_request(url, verify=self.cert_verify)
 
-        if response.status_code != 200:
+        if response.status_code == 302:
+            raise Exception("Received redirect (HTTP 302). Try to switch between http/https protocol")
+        elif response.status_code != 200:
             self._warn("Failed to fetch meta information")
         else:
             try:
@@ -351,6 +353,9 @@ class OMSQuery(object):
         else:
             ret = self.get_request(url, verify=self.cert_verify)
 
+        if ret.status_code == 302:
+            raise Exception("Received redirect (HTTP 302). Try to switch between http/https protocol")
+
         return ret
 
     def meta(self):
@@ -364,15 +369,15 @@ class OMSQuery(object):
 
     def get_request(self, url, verify=False):
         if self.oms_auth:
-            response = requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies)
+            response = requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies, allow_redirects=False)
             #check if token has expired (Unauthorized)
             if response.status_code == 401:
                 print("Unauthorized. Will try to obtain a new token")
                 self.oms_auth.auth_oidc()
-                return requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies)
+                return requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies, allow_redirects=False)
             return response
         else:
-            return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies)
+            return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=False)
  
 class OMSAPIOAuth(object):
     """ OMS API token store and manager """
@@ -477,7 +482,7 @@ class OMSAPI(object):
             self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience, self.cert_verify, proxies=proxies, retry_on_err_sec=self.err_sec)
         self.oms_auth.auth_oidc()
 
-    def auth_krb(self, cookie_path="ssocookies.txt"):
+    def auth_krb(self, cookie_path="ssocookies.txt", sandbox_cmd=False):
         """ Authorisation for https using kerberos"""
 
         def rm_file(filename):
@@ -485,9 +490,16 @@ class OMSAPI(object):
                 os.remove(filename)
 
         rm_file(cookie_path)
-        args = ["auth-get-sso-cookie", "-u", self.api_url_host, "-o", cookie_path]
-        if not self.cert_verify:
-            args.append("--nocertverify")
+
+        if not sandbox_cmd:
+            args = ["auth-get-sso-cookie", "-u", self.api_url_host, "-o", cookie_path]
+            if not self.cert_verify:
+                args.append("--nocertverify")
+        else:
+            #needed with CMSSW which overrides Python env and auth-get-sso-cookie fails
+            nocert = "--nocertverify" if not self.cert_verify else ""
+            args = ['/bin/env', '-i', 'bash', '-c', '-l', f'auth-get-sso-cookie -u {self.api_url_host} -o {cookie_path} {nocert}']
+
         try:
             subprocess.call(args)
         except OSError as e:
