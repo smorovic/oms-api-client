@@ -25,8 +25,8 @@ group.add_argument( '--currentFill', action = 'store_true', help = 'for the ongo
 
 args = parser.parse_args()
 
-omsapi = OMSAPI("http://cmsomsapidev.cern.ch:8080/api", "v1")
-
+omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1", cert_verify=False)
+omsapi.auth_krb()
 
 # Create a query.
 wbm = omsapi.query("fills")

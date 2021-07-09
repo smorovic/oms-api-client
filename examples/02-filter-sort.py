@@ -5,7 +5,9 @@
 from __future__ import print_function
 from omsapi import OMSAPI
 
-omsapi = OMSAPI("http://cmsomsapi.cern.ch:8080/api", "v1")
+#omsapi = OMSAPI("http://cmsomsapi.cern.ch:8080/api", "v1")
+omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1", cert_verify=False)
+omsapi.auth_krb()
 
 ls_query = omsapi.query("lumisections")
 

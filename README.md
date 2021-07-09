@@ -80,7 +80,7 @@ print(response.json())
 ```
 from omsapi import OMSAPI
 
-omsapi = OMSAPI()
+omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1", cert_verify=False)
 omsapi.auth_oidc(my_app_id,my_app_secret)
 
 # Create a query
@@ -109,7 +109,7 @@ Example:
 ```
 from omsapi import OMSAPI
 
-omsapi = OMSAPI()
+omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1")
 ```
 
 ### Create query
