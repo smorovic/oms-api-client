@@ -26,7 +26,7 @@ group.add_argument( '--bits', nargs='+', help = 'list of algo bits for which max
 
 args = parser.parse_args()
 
-omsapi = OMSAPI("http://cmsomsapi.cern.ch:8080/api", "v1")
+omsapi = OMSAPI('http://cmsoms.cms/agg/api/','v1')
 
 
 triggerBits = []
@@ -64,14 +64,14 @@ else:
 
 
 # Create a query.
-query = omsapi.query("l1algorithmtriggersperlumisection")
+query = omsapi.query("l1algorithmtriggers")
 query.per_page = 10000  # to get all LS in one go
 
 # Projection. Specify attributes you want to fetch
 query.attrs(["name","bit","pre_dt_rate"])
 
 for bit in triggerBits:
-    query.clear_filter().filter("run_number", args.run ).filter("bit", bit)
+    query.clear_filter().filter("run_number", args.run ).filter("bit", bit)  # returns data per lumisection
     data = query.data().json()['data']
     query.verbose = False
     max = 0.0
@@ -81,4 +81,13 @@ for bit in triggerBits:
     print('max rate: {rate:8.1f} Hz    bit {bit:3d} {algo}'.format( rate = round(max), 
                                                                     bit = data[0]['attributes']['bit'],
                                                                     algo = data[0]['attributes']['name'] ) )
+
+# let's check the mean rates
+for bit in triggerBits:
+    query.clear_filter().filter("run_number", args.run ).filter("bit", bit).custom('group[granularity]','run')  # returns mean value over run or lumisection range
+    data = query.data().json()['data']
+    print('mean rate: {rate:8.1f} Hz    bit {bit:3d} {algo}'.format( rate = data[0]['attributes']['pre_dt_rate'],
+                                                                    bit = data[0]['attributes']['bit'],
+                                                                    algo = data[0]['attributes']['name'] ) )
+
 
