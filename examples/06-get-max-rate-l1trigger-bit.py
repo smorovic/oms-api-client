@@ -26,8 +26,7 @@ group.add_argument( '--bits', nargs='+', help = 'list of algo bits for which max
 
 args = parser.parse_args()
 
-omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1", cert_verify=False)
-omsapi.auth_krb()
+omsapi = OMSAPI('http://cmsoms.cms/agg/api/','v1')
 
 
 triggerBits = []
