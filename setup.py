@@ -1,5 +1,6 @@
 import setuptools
 import sys
+import subprocess
 
 if sys.version_info.major == 2:
     python_version = 'python2-'
@@ -26,6 +27,11 @@ bdist_rpm._original_make_spec_file = bdist_rpm._make_spec_file
 bdist_rpm._make_spec_file = custom_make_spec_file
 ## END OF HACK
 
+#fetch version from the latest tag
+proc = subprocess.Popen("git describe --tags | sed 's/^v//' | awk '{split($0,a,\"-\"); print a[1]}'",
+                        shell=True,
+                        stdout=subprocess.PIPE)
+ver=proc.communicate()[0].decode()
 
 with open("README.md", "r") as fh:
 
@@ -35,7 +41,7 @@ setuptools.setup(
 
     name=python_version + 'omsapi',
 
-    version='0.8.8',
+    version=ver,
 
     author="Mantas Stankevicius",
 
