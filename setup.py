@@ -33,7 +33,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
 
-    name='omsapi',
+    name=python_version + 'omsapi',
 
     version='0.8.8',
 
