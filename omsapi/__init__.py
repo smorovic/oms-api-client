@@ -14,14 +14,11 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from requests.exceptions import ConnectionError
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-
 OMS_FILTER_OPERATORS = ["EQ", "NEQ", "LT", "GT", "LE", "GE", "LIKE"]
 OMS_INCLUDES = ["meta", "presentation_timestamp", "data_only"]
 
 #OpenID parameters
-cern_auth_token_url='https://auth.cern.ch/auth/realms/cern/protocol/openid-connect/token'
-grant_type='client_credentials'
-exc_token_type='access_token'
+cern_api_url='https://auth.cern.ch/auth/realms/cern/api-access/token'
 
 class OMSApiException(Exception):
     """ OMS API Client Exception """
@@ -416,32 +413,17 @@ class OMSAPIOAuth(object):
                 
         self.token_time = current_time
         token_req_data = {
-            'grant_type': grant_type,
+            'grant_type': 'client_credentials',
             'client_id': self.client_id,
-            'client_secret': self.client_secret
+            'client_secret': self.client_secret,
+            'audience': self.audience
         }
-        ret = requests.post(cern_auth_token_url, data=token_req_data, verify=self.cert_verify, proxies=self.proxies)
+        ret = requests.post(cern_api_url, data=token_req_data, verify=self.cert_verify, proxies=self.proxies)
         if ret.status_code!=200:
             raise Exception("Unable to acquire OAuth token: " + ret.content.decode())
 
-        res = json.loads(ret.content)
-
-        exchange_data = {
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
-            'subject_token': res['access_token'],
-            'audience': self.audience,
-            'grant_type':'urn:ietf:params:oauth:grant-type:token-exchange',
-            'requested_token_type':'urn:ietf:params:oauth:token-type:'+ exc_token_type
-        }
-
-        #cert verification disabled
-        ret = requests.post(cern_auth_token_url, data=exchange_data, verify=self.cert_verify, proxies=self.proxies)
-        if ret.status_code!=200:
-            raise Exception("Unable to exchange OAuth token: " + ret.content.decode())
-
         self.token_json = json.loads(ret.content)
-        self.token_headers = {'Authorization':'Bearer ' + self.token_json["access_token"]}
+        self.token_headers = {'Authorization':'Bearer ' + self.token_json["access_token"], 'content-type':'application/json'}
 
  
 class OMSAPI(object):
