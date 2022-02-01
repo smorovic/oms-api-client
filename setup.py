@@ -3,7 +3,8 @@ import sys
 import subprocess
 
 if sys.version_info.major == 2:
-    python_version = 'python2-'
+    print("Python 2 is not supported")
+    sys.exit(2)
 else:
     python_version = 'python'+str(sys.version_info.major)+str(sys.version_info.minor)+'-'
 
