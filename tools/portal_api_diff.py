@@ -604,7 +604,7 @@ def analysis(q_1, q_2, workspace, folder, page):
         page2_portlet_components = parse_portlets(response_2_page["data"]["attributes"]["portlets"], 2)
         page2_controller = None
         if (response_2_page["data"]["attributes"]["controller"]):
-            page2_controller = parse_controller(response_2_page["data"]["attributes"]["controller"]["attributes"], 1)
+            page2_controller = parse_controller(response_2_page["data"]["attributes"]["controller"]["attributes"], 2)
 
         #compare...
         print("...COMPARING PORTLETS...")
