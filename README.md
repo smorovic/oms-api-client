@@ -27,7 +27,7 @@ python3.6 setup.py bdist_rpm --python python3.6 --release 0.cc7
 ## Build RPM (CC8/python 3.8):
 ```
 cd oms-api-client
-python3.8 setup.py bdist_rpm --python python3.8 --release 0.cc8
+python3.8 setup.py bdist_rpm --python python3.8 --release 0.el8
 ```
 
 ## Requirements
@@ -243,3 +243,14 @@ sudo yum install auth-get-sso-cookie
 ```
 
 see example [07-sso-krb.py](examples/07-sso-krb.py)
+
+
+## Portal-API diff tool
+
+Can be used to compare pages and other components in two instances of portal-api DB.
+For example:
+```
+kinit YOURUSER@CERN.CH
+./tools/portal_api_diff.py vocms0184.cern.ch vocms0185.cern.ch /cms/triggers/hlt_trigger_rates
+```
+
