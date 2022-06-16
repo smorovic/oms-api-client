@@ -375,6 +375,43 @@ class OMSQuery(object):
             return response
         else:
             return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=False)
+
+
+
+class OMSMetaQuery(object):
+    """ OMS Meta Query object """
+
+    def __init__(self, base_url, verbose, cookies, oms_auth, cert_verify, retry_on_err_sec, proxies):
+        self.attribute_validation = True
+        self.base_url = base_url
+        self.verbose = verbose
+        self.cookies = cookies
+        self.oms_auth = oms_auth
+        self.cert_verify = cert_verify
+        self.err_sec = retry_on_err_sec
+        self.proxies = proxies
+
+    def data(self, path):
+        if path.startswith('/'):
+            ret = self.get_request(self.base_url + path, verify=self.cert_verify)
+        else:
+            ret = self.get_request(self.base_url + '/' + path, verify=self.cert_verify)
+        if ret.status_code == 302:
+            raise Exception("Received redirect (HTTP 302). Try to switch between http/https protocol")
+        return ret
+ 
+    def get_request(self, url, verify=False):
+        if self.oms_auth:
+            response = requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies, allow_redirects=False)
+            #check if token has expired (Unauthorized)
+            if response.status_code == 401:
+                print("Unauthorized. Will try to obtain a new token")
+                self.oms_auth.auth_oidc()
+                return requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies, allow_redirects=False)
+            return response
+        else:
+            return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=False)
+
  
 class OMSAPIOAuth(object):
     """ OMS API token store and manager """
@@ -453,6 +490,14 @@ class OMSAPI(object):
         """ Create query object """
 
         q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose,
+                     cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify, retry_on_err_sec=self.err_sec, proxies=self.proxies)
+
+        return q
+
+    def query_metadata(self, query_validation=True):
+        """ Create query object for metadata"""
+
+        q = OMSMetaQuery(self.api_url, verbose=self.verbose,
                      cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify, retry_on_err_sec=self.err_sec, proxies=self.proxies)
 
         return q
