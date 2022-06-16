@@ -146,6 +146,14 @@ def parse_portlets(pprops, srv):
 def parse_controller(ctrl, srv):
   #print("CONTROLLER",json.dumps(ctrl))
   cc_in = ctrl["controller_component"]["attributes"]
+  try:
+      workspace_id_to_path[srv][cc_in["workspace_id"]]
+  except:
+      print(f"Error: unknown controller component {cc_in['name']} workspace id {cc_in['workspace_id']} in server {srv}")
+  try:
+      workspace_id_to_path[srv][ctrl["workspace_id"]]
+  except:
+      print(f"Error: unknown controller component {ctrl['title']} workspace id {ctrl['workspace_id']} in server {srv}")
   cc = {
     "name": cc_in["name"],
     "config_schema": json.dumps(cc_in["config_schema"]),
@@ -186,7 +194,7 @@ def get_delta_keys(a,b, obj_name, optional=""):
     
       in_b = b.keys() - a.keys()
       if len(in_b):
-        print(f"Error: {obj_name} components only in destination: {in_b}" + (( " for " + optional) if optional else ""))
+        print(f"Error: {obj_name}s only in destination: {in_b}" + (( " for " + optional) if optional else ""))
 
       final_list = list(set(list(a.keys()) + list(b.keys())) - set(a.keys()-b.keys()) - set(b.keys()-a.keys()))
     else:
@@ -259,7 +267,7 @@ def find_components(pmap_in, q2):
                       #fetch portlets query
                       ws_portlets_cache[ws2_pkey] = q2.data("workspaces/" + str(ws2_id) + "/portlets").json()["data"]
 
-                  for p2_ in ws_portlets_cache[ws_pkey]:
+                  for p2_ in ws_portlets_cache[ws2_pkey]:
                     p2 = p2_["attributes"]
                     if p2["title"] == portlet1["title"]:
                       
@@ -362,7 +370,7 @@ def find_controller(c_in, q2):
               if comp2["name"] == comp["name"]:
                   ws_2 = workspace_id_to_path[2][comp2["workspace_id"]]
                   match = True
-                  print(f"Warning: component name {comp['name']} type {comp['type']} found in a different workspace from source ({comp['workspace']} != {ws_2})")
+                  print(f"Warning: ctrl component name {comp['name']} found in a different workspace from source ({comp['workspace']} != {ws_2})")
                   component = {"name": comp2["name"], "controller":None,
                                      "workspace":  ws2,
                                      "workspace_id": comp2["workspace_id"],
@@ -371,7 +379,7 @@ def find_controller(c_in, q2):
                   match_id = comp2["id"]
                   match_ws_id = comp2["workspace_id"]
     if not match:
-       print(f"Error: Controller component {comp} not found in destination")
+       print(f"Error: Controller component {comp['name']} not found in destination")
        return None
     else:
         #find controller
@@ -391,7 +399,7 @@ def find_controller(c_in, q2):
                   #fetch controllers query
                   ws_controllers_cache[ws2_pkey] = q2.data("workspaces/" + str(ws2_id) + "/controllers").json()["data"]
 
-            for p2_ in ws_controllers_cache[ws_pkey]:
+            for p2_ in ws_controllers_cache[ws2_pkey]:
                 p2 = p2_["attributes"]
                 if p2["title"] == ctrl["title"]:
                     #match ? check component 
@@ -401,7 +409,7 @@ def find_controller(c_in, q2):
                         print(f"Warning: Controller component of controller {p2['title']} not in the same workspace ({ws_pkey} != {ws2_p})")
 
                     if p2_comp["name"] != comp["name"]:
-                        print(f"Error: Controller component of conotroller {p2['name']} is of different name ({ comp['name']} != {p2_comp['name']})")
+                        print(f"Error: Controller component of controller {p2['name']} is of different name ({ comp['name']} != {p2_comp['name']})")
                     else:
                         controller_match = True
                         component["controller"] = {
@@ -447,7 +455,7 @@ def comp_p_name(cola, colb, name, key, silent=False):
           if cola[name] != colb[name]: print(f"Error: Portlet '{key}' attribute {name} differs between source: {cola[name]} and dest: {colb[name]}")
 
 def comp_sin_name(cola, colb, name, key):
-      if cola[name] != colb[name]: print(f"Error: IN Selector '{key}' variable {name} differs between source: {cola[name]} and dest: {colb[name]}")
+      if cola[name] != colb[name]: print(f"Error: IN Selector '{key}' attribute {name} differs between source: {cola[name]} and dest: {colb[name]}")
 
 def comp_sout_name(cola, colb, name, key):
       if cola[name] != colb[name]: print(f"Error: OUT Selector '{key}' attribute {name} differs between source: {cola[name]} and dest: {colb[name]}")
@@ -457,15 +465,15 @@ def comp_pp_name(cola, colb, name, key):
 
 def comp_cc_name(cola, colb, name, key, silent=False):
       if silent:
-          if cola[name] != colb[name]: print(f"error: Controller component {key} attribute {name} differs between source and dest.")
+          if cola[name] != colb[name]: print(f"Error: Controller component {key} attribute {name} differs between source and dest.")
       else:
-          if cola[name] != colb[name]: print(f"error: Controller component {key} attribute {name} differs between source: {cola[name]} and dest: {colb[name]}")
+          if cola[name] != colb[name]: print(f"Error: Controller component {key} attribute {name} differs between source: {cola[name]} and dest: {colb[name]}")
 
 def comp_ctrl_name(cola, colb, name, key, silent=False):
       if silent:
-          if cola[name] != colb[name]: print(f"error: Controller attribute {key} {name} differs between source and dest.")
+          if cola[name] != colb[name]: print(f"Error: Controller attribute {key} {name} differs between source and dest.")
       else:
-          if cola[name] != colb[name]: print(f"error: Controller attribute {key} {name} differs between source: {cola[name]} and dest: {colb[name]}")
+          if cola[name] != colb[name]: print(f"Error: Controller attribute {key} {name} differs between source: {cola[name]} and dest: {colb[name]}")
 
 def comp_csel_name(cola, colb, name, key):
       if cola[name] != colb[name]: print(f"Error: Controller Selector '{key}' variable {name} differs between source: {cola[name]} and dest: {colb[name]}")
@@ -596,7 +604,7 @@ def analysis(q_1, q_2, workspace, folder, page):
         page2_portlet_components = parse_portlets(response_2_page["data"]["attributes"]["portlets"], 2)
         page2_controller = None
         if (response_2_page["data"]["attributes"]["controller"]):
-            page2_controller = parse_controller(response_2_page["data"]["attributes"]["controller"]["attributes"], 1)
+            page2_controller = parse_controller(response_2_page["data"]["attributes"]["controller"]["attributes"], 2)
 
         #compare...
         print("...COMPARING PORTLETS...")
