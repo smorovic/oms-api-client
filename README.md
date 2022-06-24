@@ -40,6 +40,11 @@ of auth_oidc().
 
 You will need to request rights for access. Please send a mail to cmsoms-operations@cern.ch or cmsoms-developers@cern.ch with your application identifier, so that OMS maintainers can add your application to oms-api-access group (group exists in Malt/Grappa infrastructure only, not as an e-group). This group is used to controll access for access for all OMS instances (see below).
 
+It is also recommended to add yourself to the cmsoms-api-users in CERN e-groups:
+  https://e-groups.cern.ch/e-groups/EgroupsSearchForm.do
+
+Important news and announcements will be sent to this mailing list e-group 
+
 See also:
 https://gitlab.cern.ch/cmsoms/oms-api-client/-/wikis/OpenID-API-instructions
 
@@ -49,9 +54,6 @@ cmsoms-int-0184 - for Development access (https://vocms0184.cern.ch)
 cmsoms-int-0185 - for Integration access (https://vocms0185.cern.ch)
 cmsoms-prod - for Production access (https://cmsoms.cern.ch)
 ```
-
-Production OMS is currently not using OpenID. Once all current clients are ready to migrate to OpenID, it wil be activated. For development
-prior to this, other instances should be used for development.
 
 # Examples
 
