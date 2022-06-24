@@ -38,12 +38,12 @@ When doing the step of SSO Registration, select option allowing application to
 request tokens itself. Copy client id and client secret and use them as parameters
 of auth_oidc().
 
-You will need to request rights for token exchange with the target application ID (audience parameter, see below for available IDs).
-After creating the application, click on the new application -> `SSO Registration` -> `Token Exchange Permissions` button in the portal.
-There you can request token exchange, by specifying target application ID (use same as audience parameter). We also advise to send a mail to
-cmsoms-developers@cern.ch or cmsoms-operations@cern.ch to ask responsible maintainers to approve your application request.
+You will need to request rights for access. Please send a mail to cmsoms-operations@cern.ch or cmsoms-developers@cern.ch with your application identifier, so that OMS maintainers can add your application to oms-api-access group (group exists in Malt/Grappa infrastructure only, not as an e-group). This group is used to controll access for access for all OMS instances (see below).
 
-Audience parameter defaults to application ID 'cmsoms-prod'. Corresponding IDs for OMS instances are:
+See also:
+https://gitlab.cern.ch/cmsoms/oms-api-client/-/wikis/OpenID-API-instructions
+
+Note: audience parameter defaults to application ID 'cmsoms-prod'. Corresponding IDs for OMS instances are:
 ```
 cmsoms-int-0184 - for Development access (https://vocms0184.cern.ch)
 cmsoms-int-0185 - for Integration access (https://vocms0185.cern.ch)
