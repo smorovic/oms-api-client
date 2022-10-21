@@ -293,7 +293,7 @@ class OMSQuery(object):
                 str
         """
 
-        url = "{base_url}/{resource}/".format(base_url=self.base_url,
+        url = "{base_url}/{resource}".format(base_url=self.base_url,
                                               resource=self.resource)
 
         url_params = []
