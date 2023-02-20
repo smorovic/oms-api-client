@@ -24,10 +24,10 @@ cd oms-api-client
 python3.6 setup.py bdist_rpm --python python3.6 --release 0.cc7
 ```
 
-## Build RPM (CC8/python 3.8):
+## Build RPM (CC8(RHEL8)/python 3.8):
 ```
 cd oms-api-client
-python3.8 setup.py bdist_rpm --python python3.8 --release 0.el8
+python3.8 setup.py bdist_rpm --python /usr/bin/python3.8 --build-requires python38,python38-setuptools --release 0.el8
 ```
 
 ## Requirements
