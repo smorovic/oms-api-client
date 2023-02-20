@@ -34,9 +34,9 @@ proc = subprocess.Popen("git describe --tags | sed 's/^v//' | awk '{split($0,a,\
                         stdout=subprocess.PIPE)
 ver=proc.communicate()[0].decode()
 
-with open("README.md", "r") as fh:
+#with open("README.md", "r") as fh:
 
-    long_description = fh.read()
+    #long_description = fh.read()
 
 setuptools.setup(
 
@@ -50,7 +50,7 @@ setuptools.setup(
 
     description="python client for OMS API",
 
-    long_description=long_description,
+    #long_description=long_description,
 
     long_description_content_type="text/markdown",
 

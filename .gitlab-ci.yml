@@ -1,0 +1,16 @@
+stages:
+  - publish
+  
+
+deploy_master_tag:
+  stage: publish
+  tags:
+    - el8
+    - oms
+    - client
+    - api
+  only:
+    - tags
+  script:
+    - ./kojitag.sh
+
