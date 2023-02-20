@@ -11,8 +11,6 @@ pkg="python38-omsapi"
 srcrpm=`ls -t dist/${pkg}-*.src.rpm | head -1`
 rpmname=`/usr/bin/python3 -c "import os,sys; p = sys.argv[1].split('/')[-1]; print(p[:p.find('.src.rpm')])" $srcrpm`
 
-#KOJICI_USER=""
-#KOJICI_PWD=""
 echo "RUNNING WITH KOJI USER ${KOJICI_USER}"
 echo ${KOJICI_PWD} | kinit ${KOJICI_USER}@CERN.CH
 
