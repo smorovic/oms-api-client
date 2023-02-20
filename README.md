@@ -30,6 +30,9 @@ cd oms-api-client
 python3.8 setup.py bdist_rpm --python /usr/bin/python3.8 --build-requires python38,python38-setuptools --release 0.el8
 ```
 
+Note: kojitag.sh script is used by gitlab CI only
+
+
 ## Requirements
 
 auth_oidc() requires registered CERN OpenID application. It can be created
