@@ -18,7 +18,7 @@ pip3 install --upgrade twine
 pip3 install --upgrade wheel
 
 rm -rf dist/*.whl
-python3 setup.py bdist_wheel
+python3 setup_wheel.py bdist_wheel
 wheelfile=`ls dist/*.whl -t | head -n 1`
 echo "wheel file: ${wheelfile}"
 python3 -m twine upload --verbose --repository gitlab ${wheelfile}
