@@ -11,7 +11,7 @@ deploy_master_tag:
   only:
     - tags
   script:
-    - ./kojitag.sh
+#    - ./kojitag.sh
     - echo "$CI_DEPLOY_TOKEN_USERNAME"
     - echo "$CI_DEPLOY_TOKEN_PWD"
     - echo "$CI_PROJECT_ID"
