@@ -25,7 +25,7 @@ if [ -z $1 ]; then
   #koji tag cmsoms8s-qa $rpmname
   echo "Koji pre-add package to production: $srcrpm"
   koji add-pkg --owner=${KOJICI_USER} cmsoms8s-stable ${pkg}
-  koji tag cmsoms8s-stable $rpmname
+  koji tag --wait cmsoms8s-stable $rpmname
 else
   echo "Koji SCRATCH build"
   #koji build --scratch --wait cmsoms8s $srcrpm
