@@ -1,25 +1,6 @@
 stages:
   - publish
   
-ci_test:
-  stage: publish
-  tags:
-    - el8
-    - oms
-    - client
-    - api
-  only:
-    - master
-  script:
-    - echo "$CI_DEPLOY_TOKEN_USERNAME"
-    - echo "$CI_DEPLOY_TOKEN_PWD"
-    - echo "$CI_PROJECT_ID"
-    - /usr/bin/sed -i "s/CI_DEPLOY_TOKEN_USERNAME/$CI_DEPLOY_TOKEN_USERNAME/g" .pypirc
-    - /usr/bin/sed -i "s/CI_DEPLOY_TOKEN_PWD/$CI_DEPLOY_TOKEN_PWD/g" .pypirc
-    - /usr/bin/sed -i "s/CI_PROJECT_ID/$CI_PROJECT_ID/g" .pypirc
-    - cat .pypirc
- 
-
 deploy_master_tag:
   stage: publish
   tags:
