@@ -13,4 +13,5 @@ deploy_master_tag:
     - tags
   script:
     - ./kojitag.sh
+    - ./publish_pypi_ci.sh
 
