@@ -20,5 +20,5 @@ deploy_master_tag:
     - cat .pypirc
     - cp .pypirc ~/
     - ./publish_pypi.sh
-#    - ./kojitag.sh
+    - ./kojitag.sh
 
