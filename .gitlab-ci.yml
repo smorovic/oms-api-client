@@ -1,6 +1,20 @@
 stages:
   - publish
   
+ci_test:
+  stage: publish
+  tags:
+    - el8
+    - oms
+    - client
+    - api
+  only:
+    - master
+  script:
+    - echo "$CI_DEPLOY_TOKEN_USERNAME"
+    - echo "$CI_DEPLOY_TOKEN_PWD"
+    - echo "$CI_PROJECT_ID"
+
 
 deploy_master_tag:
   stage: publish
@@ -13,9 +27,9 @@ deploy_master_tag:
     - tags
   script:
     - ./kojitag.sh
-    - echo "${env.CI_DEPLOY_TOKEN_USERNAME}"
-    - echo "${env.CI_DEPLOY_TOKEN_PWD}"
-    - echo "${env.env.CI_PROJECT_ID}"
+    - echo "$CI_DEPLOY_TOKEN_USERNAME"
+    - echo "$CI_DEPLOY_TOKEN_PWD"
+    - echo "$CI_PROJECT_ID"
     - /usr/bin/sed -i "s/CI_DEPLOY_TOKEN_USERNAME/${env.CI_DEPLOY_TOKEN_USERNAME}/g" .pypirc
     - /usr/bin/sed -i "s/CI_DEPLOY_TOKEN_PWD/${env.CI_DEPLOY_TOKEN_PWD}/g" .pypirc
     - cp .pypirc ~/
