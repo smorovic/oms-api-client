@@ -5,15 +5,6 @@ import subprocess
 if sys.version_info.major == 2:
     print("Python 2 is not supported")
     sys.exit(2)
-else:
-    python_version = 'python'+str(sys.version_info.major)+str(sys.version_info.minor)+'-'
-
-RPM_REQUIRED_DEPS = python_version+'requests'
-
-#additional package required if using kerberos auth to access OIDC protected resources
-#RPM_REQUIRED_DEPS = python_version+'requests'+',auth-get-sso-cookie'
-
-## HACK FOR DEPS IN RPMS (taken from https://gist.github.com/primalmotion/1561092)
 
 #fetch version from the latest tag
 proc = subprocess.Popen("git describe --tags | sed 's/^v//' | awk '{split($0,a,\"-\"); print a[1]}'",
