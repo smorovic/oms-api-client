@@ -33,6 +33,7 @@ deploy_master_tag:
     - /usr/bin/sed -i "s/CI_DEPLOY_TOKEN_USERNAME/$CI_DEPLOY_TOKEN_USERNAME/g" .pypirc
     - /usr/bin/sed -i "s/CI_DEPLOY_TOKEN_PWD/$CI_DEPLOY_TOKEN_PWD/g" .pypirc
     - /usr/bin/sed -i "s/CI_PROJECT_ID/$CI_PROJECT_ID/g" .pypirc
+    - cat .pypirc
     - cp .pypirc ~/
     - ./publish_pypi.sh
 
