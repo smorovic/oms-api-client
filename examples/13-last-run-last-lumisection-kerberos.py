@@ -6,7 +6,7 @@ from __future__ import print_function
 import time
 from omsapi import OMSAPI
 
-omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1", cert_verify=True, verbose=False)
+omsapi = OMSAPI("https://cmsoms.cern.ch/agg/api", "v1", cert_verify=False, verbose=False)
 
 # Authenticate using kerberos
 omsapi.auth_krb()
