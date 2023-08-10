@@ -30,7 +30,19 @@ cd oms-api-client
 python3.8 setup.py bdist_rpm --python /usr/bin/python3.8 --build-requires python38,python38-setuptools --release 0.el8
 ```
 
+## Build RPM (ALMA9/python 3.9):
+```
+cd oms-api-client
+#python3.9 is default
+python3 setup.py bdist_rpm --python /usr/bin/python3 --build-requires python3,python3-setuptools --release 0.el9
+```
+
 Note: kojitag.sh script is used by gitlab CI only
+
+## Install with pip/pypi (supports multiple python versions):
+```
+pip install omsapi --index-url https://gitlab.cern.ch/api/v4/projects/45046/packages/pypi/simple
+```
 
 
 ## Requirements
