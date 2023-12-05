@@ -380,6 +380,7 @@ class OMSQuery(object):
                 return requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies, allow_redirects=False)
             return response
         else:
+            #for cookie in (self.cookies): print(cookie, "                ", self.cookies[cookie])#.split('<Cookie'))
             return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=False)
 
 
@@ -571,3 +572,15 @@ class OMSAPI(object):
             raise OMSApiException("Unkown cookies")
 
         rm_file(cookie_path)
+
+    def auth_krb_2fa(self):
+        """ Authorisation for https using kerberos + 2FA prompt """
+        import tsgauth
+        auth = tsgauth.oidcauth.KerbSessionAuth(url="https://cmsoms.cern.ch",use_auth_file=False)
+        self.cookies = cookies = {**auth.authparams()}["cookies"].get_dict()
+        #self.cookies = {}
+        #for c in cookies:
+        #    if c.startswith('mod_auth_openidc_'):
+        #        self.cookies[c] = cookies[c]
+
+        #self.cookies = {**auth.authparams()}["cookies"]

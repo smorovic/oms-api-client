@@ -7,6 +7,11 @@ This client is a recommended way to access CMS OMS data from your scripts.
 ```
 git clone ssh://git@gitlab.cern.ch:7999/cmsoms/oms-api-client.git
 cd oms-api-client
+
+## Optionally:
+python3 -m venv venv
+source venv/bin/activate
+
 python3 -m pip install -r requirements.txt
 python3 setup.py install --user
 ```
