@@ -28,7 +28,7 @@ class OMSApiException(Exception):
 class OMSQuery(object):
     """ OMS Query object """
 
-    def __init__(self, base_url, resource, verbose, cookies, oms_auth, cert_verify, retry_on_err_sec, proxies):
+    def __init__(self, base_url, resource, verbose, cookies, oms_auth, cert_verify, throw_on_err, retry_on_err_sec, proxies):
         self.attribute_validation = True
         self.base_url = base_url
         self.resource = resource
@@ -38,6 +38,7 @@ class OMSQuery(object):
         self.cert_verify = cert_verify
         self.err_sec = retry_on_err_sec
         self.proxies = proxies
+        self.throw_on_err = throw_on_err
 
         self._attrs = None  # Projection
         self._filter = []  # Filtering
@@ -345,6 +346,8 @@ class OMSQuery(object):
                     ret = self.get_request(url, verify=self.cert_verify)
                     break
                 except ConnectionError as ex:
+                    if self.throw_on_err:
+                        raise
                     print("Warning: will retry in " + str(self.err_sec) + "seconds after connection error: " + str(ex))
                     time.sleep(self.err_sec)
         else:
@@ -352,6 +355,9 @@ class OMSQuery(object):
 
         if ret.status_code == 302:
             raise Exception("Received redirect (HTTP 302). Try to switch between http/https protocol")
+
+        if self.throw_on_err and ret.status_code not in [200, 201]:
+            raise Exception("HTTP Error", ret)
 
         return ret
 
@@ -374,7 +380,7 @@ class OMSQuery(object):
                 return requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies, allow_redirects=False)
             return response
         else:
-            return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=False)
+            return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=True)
 
 
 
@@ -431,8 +437,7 @@ class OMSAPIOAuth(object):
         if self.err_sec > 0:
             while True:
                 try:
-                    ret = self.auth_oidc_req()
-                    return ret
+                    return self.auth_oidc_req()
                 except ConnectionError as ex:
                     print("Warning: will retry auth_oidc in " + str(self.err_sec) + "seconds after connection error: " + str(ex))
                     time.sleep(self.err_sec)
@@ -446,7 +451,7 @@ class OMSAPIOAuth(object):
         if self.token_json and self.token_time:
             if current_time - self.token_time < 30:
                 print("Warning: token was requested less than 30 seconds ago. Will not renew this time.")
-                return
+                return "OK"
                 
         self.token_time = current_time
         token_req_data = {
@@ -461,18 +466,20 @@ class OMSAPIOAuth(object):
 
         self.token_json = json.loads(ret.content)
         self.token_headers = {'Authorization':'Bearer ' + self.token_json["access_token"], 'content-type':'application/json'}
+        return "OK"
 
  
 class OMSAPI(object):
     """ Base OMS API client """
 
-    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True, cert_verify=True, retry_on_err_sec=0, proxies={}):
+    def __init__(self, api_url="https://cmsoms.cern.ch/agg/api", api_version="v1", verbose=True, cert_verify=True, throw_on_err=False, retry_on_err_sec=0, proxies={}):
         self.api_url = api_url
         self.api_version = api_version
         self.verbose = verbose
         self.cert_verify = cert_verify 
         self.err_sec = retry_on_err_sec
         self.proxies = proxies
+        self.throw_on_err = throw_on_err
 
         self.base_url = "{api_url}/{api_version}".format(api_url=api_url,
                                                          api_version=api_version)
@@ -490,7 +497,7 @@ class OMSAPI(object):
         """ Create query object """
 
         q = OMSQuery(self.base_url, resource=resource, verbose=self.verbose,
-                     cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify, retry_on_err_sec=self.err_sec, proxies=self.proxies)
+                     cookies=self.cookies, oms_auth=self.oms_auth, cert_verify=self.cert_verify, throw_on_err=self.throw_on_err, retry_on_err_sec=self.err_sec, proxies=self.proxies)
 
         return q
 
