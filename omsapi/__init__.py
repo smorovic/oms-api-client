@@ -380,7 +380,7 @@ class OMSQuery(object):
                 return requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies, allow_redirects=False)
             return response
         else:
-            return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=True)
+            return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=False)
 
 
 
