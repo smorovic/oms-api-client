@@ -517,70 +517,20 @@ class OMSAPI(object):
             self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience, self.cert_verify, proxies=proxies, retry_on_err_sec=self.err_sec)
         self.oms_auth.auth_oidc()
 
-    def auth_krb(self, cookie_path="ssocookies.txt", sandbox_cmd=False):
-        """ Authorisation for https using kerberos"""
-
-        def rm_file(filename):
-            if os.path.isfile(filename) and os.access(filename, os.R_OK):
-                os.remove(filename)
-
-        rm_file(cookie_path)
-
-        if not sandbox_cmd:
-            args = ["auth-get-sso-cookie", "-u", self.api_url_host, "-o", cookie_path]
-            if not self.cert_verify:
-                args.append("--nocertverify")
-        else:
-            #needed with CMSSW which overrides Python env and auth-get-sso-cookie fails
-
-            #ensure same kerberos cache is used
-            try:
-                krbenv= "KRB5CCNAME=" + os.environ["KRB5CCNAME"] + " "
-            except:
-                krbenv=""
-            
-            nocert = "--nocertverify" if not self.cert_verify else ""
-            args = ['/bin/env', '-i', 'bash', '-c', '-l', f'{krbenv}auth-get-sso-cookie -u {self.api_url_host} -o {cookie_path} {nocert}']
-
-        try:
-            subprocess.call(args)
-        except OSError as e:
-            if e.errno == os.errno.ENOENT:
-                #this package is available from CERN repos:
-                #http://linuxsoft.cern.ch/internal/repos/authz7-stable/x86_64/os
-                #http://linuxsoft.cern.ch/internal/repos/authz8-stable/x86_64/os
-                raise OMSApiException(
-                    "Required package is not available. yum install auth-get-sso-cookie")
-            else:
-                raise OMSApiException("Failed to authenticate with kerberos")
-
-        self.cookies = {}
-
-        with open(cookie_path, "r") as f:
-            cookies_raw = f.read()
-
-            for line in cookies_raw.split("\n"):
-                fields = line.split()
-                if len(fields) == 7:
-                    # fields = domain tailmatch path secure expires name value
-                    key = fields[5]
-
-                    if any(p in key for p in ["mod_auth_openidc_session"]):
-                        self.cookies[key] = fields[6]
-
-        if not self.cookies.keys():
-            raise OMSApiException("Unkown cookies")
-
-        rm_file(cookie_path)
-
-    def auth_krb_2fa(self):
-        """ Authorisation for https using kerberos + 2FA prompt """
+    def auth_krb(self):         
+        """ Authorisation for https using kerberos, also supports 2FA"""
         import tsgauth
-        auth = tsgauth.oidcauth.KerbSessionAuth(url="https://cmsoms.cern.ch",use_auth_file=False)
-        self.cookies = cookies = {**auth.authparams()}["cookies"].get_dict()
-        #self.cookies = {}
-        #for c in cookies:
-        #    if c.startswith('mod_auth_openidc_'):
-        #        self.cookies[c] = cookies[c]
+        tsg_auth = tsgauth.oidcauth.KerbSessionAuth()
+        #tsg auth is designed to be used with requests as get(url, **tsg_auth.authparams())
+        #it also does a generic log into the CERN SSO and then exchanges that for a session cookie of the appropiate website
+        #however this doesnt work for us here as we want to use the cookies directly and more importantly we have forbidden 
+        #redirects when making the request which means we cant exchange the SSO cookie for the session cookie for oms
+        #so what we do is we make a dummy request to the oms website to get the session cookie and then we use that to make the request
 
-        #self.cookies = {**auth.authparams()}["cookies"]
+        session = requests.Session()
+        session.get("https://cmsoms.cern.ch/",**tsg_auth.authparams(),verify=False)
+        self.cookies = {}
+        for c in session.cookies.get_dict():
+            if c.startswith('mod_auth_openidc_'):
+                self.cookies[c] = session.cookies[c]
+
