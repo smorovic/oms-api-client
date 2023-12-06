@@ -1,2 +1,2 @@
 requests
-tsgauth
+tsgauth==0.10.2
