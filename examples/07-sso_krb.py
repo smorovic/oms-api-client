@@ -1,3 +1,4 @@
+#!/bin/env python3
 """ Simple example.
     Fetch list of eras
 """

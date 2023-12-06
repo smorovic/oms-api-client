@@ -10,9 +10,6 @@ else:
 
 RPM_REQUIRED_DEPS = python_version+'requests'
 
-#additional package required if using kerberos auth to access OIDC protected resources
-#RPM_REQUIRED_DEPS = python_version+'requests'+',auth-get-sso-cookie'
-
 ## HACK FOR DEPS IN RPMS (taken from https://gist.github.com/primalmotion/1561092)
 from setuptools.command.bdist_rpm import bdist_rpm
 def custom_make_spec_file(self):

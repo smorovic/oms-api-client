@@ -380,7 +380,6 @@ class OMSQuery(object):
                 return requests.get(url, verify=verify, headers=self.oms_auth.token_headers, proxies=self.proxies, allow_redirects=False)
             return response
         else:
-            #for cookie in (self.cookies): print(cookie, "                ", self.cookies[cookie])#.split('<Cookie'))
             return requests.get(url, verify=verify, cookies=self.cookies, proxies=self.proxies, allow_redirects=False)
 
 
@@ -517,18 +516,18 @@ class OMSAPI(object):
             self.oms_auth = OMSAPIOAuth(client_id, client_secret, audience, self.cert_verify, proxies=proxies, retry_on_err_sec=self.err_sec)
         self.oms_auth.auth_oidc()
 
-    def auth_krb(self):         
+    def auth_krb(self):
         """ Authorisation for https using kerberos, also supports 2FA"""
         import tsgauth
         tsg_auth = tsgauth.oidcauth.KerbSessionAuth()
         #tsg auth is designed to be used with requests as get(url, **tsg_auth.authparams())
         #it also does a generic log into the CERN SSO and then exchanges that for a session cookie of the appropiate website
-        #however this doesnt work for us here as we want to use the cookies directly and more importantly we have forbidden 
+        #however this doesnt work for us here as we want to use the cookies directly and more importantly we have forbidden
         #redirects when making the request which means we cant exchange the SSO cookie for the session cookie for oms
         #so what we do is we make a dummy request to the oms website to get the session cookie and then we use that to make the request
 
         session = requests.Session()
-        session.get("https://cmsoms.cern.ch/",**tsg_auth.authparams(),verify=False)
+        session.get(self.api_url_host,**tsg_auth.authparams(),verify=False)
         self.cookies = {}
         for c in session.cookies.get_dict():
             if c.startswith('mod_auth_openidc_'):
