@@ -7,6 +7,11 @@ This client is a recommended way to access CMS OMS data from your scripts.
 ```
 git clone ssh://git@gitlab.cern.ch:7999/cmsoms/oms-api-client.git
 cd oms-api-client
+
+## Optionally:
+python3 -m venv venv
+source venv/bin/activate
+
 python3 -m pip install -r requirements.txt
 python3 setup.py install --user
 ```
@@ -250,15 +255,8 @@ print(url)
 
 ## Alternative Auth option
 
-Instead of auth with OpenID you can use Kerberos authentication.
-
-This depends on cern-get-sso-cookie RPM which works **ONLY** with CERN managed CC7 and CC8 machines (lxplus and OMS wbmportal hostgroup machines).
-
-Installation, if available:
-```
-sudo yum install auth-get-sso-cookie
-```
-
+Instead of auth with OpenID you can use Kerberos authentication. Run auth_krb() function.
+It will prompt for the 2FA code in case you have CERN OpenID two-factor authentication enabled.
 see example [07-sso-krb.py](examples/07-sso-krb.py)
 
 
