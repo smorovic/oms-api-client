@@ -52,6 +52,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
 
     ],
-    install_requires = ['requests']
+    install_requires = ['requests', 'tsgauth']
 
 )
