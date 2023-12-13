@@ -22,6 +22,11 @@ cd oms-api-client
 git pull
 python3 setup.py install --user
 ```
+## RPM dependencies (any OS):
+Currently tsgauth is not pulled in by the RPM and has to be installed separately:
+```
+pip install tsgauth
+```
 
 ## Build RPM (CC7/python 3.6):
 ```
@@ -45,6 +50,7 @@ python3 setup.py bdist_rpm --python /usr/bin/python3 --build-requires python3,py
 Note: kojitag.sh script is used by gitlab CI only
 
 ## Install with pip/pypi (supports multiple python versions):
+Note: tsgauth package is pip dependency defined for the wheel file.
 ```
 pip install omsapi --index-url https://gitlab.cern.ch/api/v4/projects/45046/packages/pypi/simple
 ```
